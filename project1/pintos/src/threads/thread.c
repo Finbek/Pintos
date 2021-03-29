@@ -61,6 +61,7 @@ static unsigned thread_ticks;   /* # of timer ticks since last yield. */
    If true, use multi-level feedback queue scheduler.
    Controlled by kernel command-line option "-o mlfqs". */
 bool thread_mlfqs;
+bool sleep_signal;
 
 static void kernel_thread (thread_func *, void *aux);
 
@@ -96,6 +97,7 @@ thread_init (void)
   list_init (&ready_list);
   list_init (&all_list);
   list_init (&blocked_list);
+  sleep_signal = false;
   /* Set up a thread structure for the running thread. */
   initial_thread = running_thread ();
   init_thread (initial_thread, "main", PRI_DEFAULT);
@@ -145,7 +147,7 @@ thread_tick (void)
 void
 try_wake_up(int64_t ticks)
 {
-if(!list_empty(&blocked_list))
+if(sleep_signal && !list_empty(&blocked_list))
   {
     while (!(list_empty(&blocked_list)) && (list_entry (list_begin(&blocked_list), struct thread, elem)->wake_up_time <= ticks))
     {
@@ -250,6 +252,7 @@ thread_sleep()
 {
   struct thread *t = thread_current();
   list_insert_ordered(&blocked_list, &t->elem, less, 0);
+  sleep_signal = true;
 }
 
 /* Transitions a blocked thread T to the ready-to-run state.
