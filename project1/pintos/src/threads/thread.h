@@ -145,6 +145,6 @@ bool list_less (const struct list_elem *a,
                              void *aux);
 /*util funciton to compare wake_up_time of threads*/
 bool less (const struct list_elem *a,
-                             const struct list_elem *b,
-                             void *aux);
+                            const struct list_elem *b,
+                            void *aux);
 #endif /* threads/thread.h */
