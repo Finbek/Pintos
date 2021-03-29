@@ -20,6 +20,9 @@
    of thread.h for details. */
 #define THREAD_MAGIC 0xcd6abf4b
 
+/*list of blocked threads*/
+static struct list blocked_list;
+
 /* List of processes in THREAD_READY state, that is, processes
    that are ready to run but not actually running. */
 static struct list ready_list;
@@ -92,6 +95,7 @@ thread_init (void)
   lock_init (&tid_lock);
   list_init (&ready_list);
   list_init (&all_list);
+  list_init (&blocked_list);
 
   /* Set up a thread structure for the running thread. */
   initial_thread = running_thread ();
@@ -137,6 +141,19 @@ thread_tick (void)
   /* Enforce preemption. */
   if (++thread_ticks >= TIME_SLICE)
     intr_yield_on_return ();
+}
+
+void
+try_wake_up(int64_t ticks)
+{
+if(!list_empty(&blocked_list))
+  {
+    if (list_entry (list_begin(&blocked_list), struct thread, elem)->wake_up_time <= ticks)
+    {
+      struct thread *t = list_entry (list_pop_front (&blocked_list), struct thread, elem);
+      thread_unblock(t);
+    }
+  }
 }
 
 /* Prints thread statistics. */
@@ -225,10 +242,16 @@ thread_block (void)
   ASSERT (!intr_context ());
   ASSERT (intr_get_level () == INTR_OFF);
 
-  thread_current ()->status = THREAD_BLOCKED;
+  thread_current() ->status = THREAD_BLOCKED;
   schedule ();
 }
 
+void
+thread_sleep()
+{
+  struct thread *t = thread_current();
+  list_insert_ordered(&blocked_list, &t->elem, less, 0);
+}
 /* Transitions a blocked thread T to the ready-to-run state.
    This is an error if T is not blocked.  (Use thread_yield() to
    make the running thread ready.)
@@ -388,7 +411,7 @@ thread_get_recent_cpu (void)
   /* Not yet implemented. */
   return 0;
 }
-
+
 /* Idle thread.  Executes when no other thread is ready to run.
 
    The idle thread is initially put on the ready list by
@@ -437,7 +460,7 @@ kernel_thread (thread_func *function, void *aux)
   function (aux);       /* Execute the thread function. */
   thread_exit ();       /* If function() returns, kill the thread. */
 }
-
+
 /* Returns the running thread. */
 struct thread *
 running_thread (void) 
@@ -598,4 +621,11 @@ bool list_less (const struct list_elem *a,
                              void *aux UNUSED)
 {
 	return list_entry(a, struct thread, elem)->priority<list_entry(b, struct thread, elem)->priority;
+}
+
+bool
+less (const struct list_elem *a, const struct list_elem *b, void *aux UNUSED)
+{
+  return list_entry(a, struct thread, elem)->wake_up_time <
+    list_entry(b, struct thread, elem)->wake_up_time;
 }
