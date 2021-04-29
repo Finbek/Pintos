@@ -11,6 +11,7 @@
 #include "filesys/directory.h"
 #include "filesys/file.h"
 #include "filesys/filesys.h"
+#include "lib/stdio.h"
 #include "threads/flags.h"
 #include "threads/init.h"
 #include "threads/interrupt.h"
@@ -20,7 +21,6 @@
 
 static thread_func start_process NO_RETURN;
 static bool load (const char *cmdline, void (**eip) (void), void **esp);
-
 /* Starts a new thread running a user program loaded from
    FILENAME.  The new thread may be scheduled (and may even exit)
    before process_execute() returns.  Returns the new process's
@@ -28,20 +28,26 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
 tid_t
 process_execute (const char *file_name) 
 {
-  char *fn_copy;
+  char *fn_copy, *token, *save_ptr;
   tid_t tid;
-
+ 
   /* Make a copy of FILE_NAME.
      Otherwise there's a race between the caller and load(). */
   fn_copy = palloc_get_page (0);
   if (fn_copy == NULL)
     return TID_ERROR;
   strlcpy (fn_copy, file_name, PGSIZE);
+  
 
   /* Create a new thread to execute FILE_NAME. */
-  tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
-  if (tid == TID_ERROR)
-    palloc_free_page (fn_copy); 
+
+  token=strtok_r(file_name, "", &save_ptr);
+  tid = thread_create (token, PRI_DEFAULT, start_process, fn_copy);
+ 
+ if (tid == TID_ERROR){
+   
+    palloc_free_page (fn_copy);
+    }
   return tid;
 }
 
@@ -53,20 +59,77 @@ start_process (void *file_name_)
   char *file_name = file_name_;
   struct intr_frame if_;
   bool success;
-
   /* Initialize interrupt frame and load executable. */
   memset (&if_, 0, sizeof if_);
   if_.gs = if_.fs = if_.es = if_.ds = if_.ss = SEL_UDSEG;
   if_.cs = SEL_UCSEG;
   if_.eflags = FLAG_IF | FLAG_MBS;
-  success = load (file_name, &if_.eip, &if_.esp);
+
+
+//Parsing
+char* token, *save_ptr;
+int argc = 0;
+char** argv = (char**) calloc(4,sizeof(char));
+//Parsing by strtok_r
+ for (token = strtok_r (file_name, " ", &save_ptr); token != NULL;
+         token = strtok_r (NULL, " ", &save_ptr))
+                {
+                                 argv[argc]=token;
+                                               argc++;                                                          } 
+argc-=1;
+
+
+
+  success = load (argv[0], &if_.eip, &if_.esp);
 
   /* If load failed, quit. */
-  palloc_free_page (file_name);
-  if (!success) 
+  //palloc_free_page (file_name);
+  if (!success) {
+    free(argv);
     thread_exit ();
+}
 
-  /* Start the user process by simulating a return from an
+//Pushing elements to the stack
+void** addresses = (void**) calloc(argc, sizeof(void*));
+int i =0;
+
+for(i = argc; i>=0; i--)
+{
+	if_.esp -= strlen(argv[i])+1;
+	addresses[i] = if_.esp;
+        memcpy(if_.esp, argv[i], strlen(argv[i])+1);
+}
+//Adding padding and allignment
+for(i=0; i<((uintptr_t)if_.esp)%4; i++){
+	if_.esp-=1;
+	memset(if_.esp,0,1);
+        }
+i=0;
+if_.esp-=4;
+//Pushhing pointers itself;
+for(i = argc; i>=0; i--)
+{
+	if_.esp-=4;
+	memcpy(if_.esp, &addresses[i], 4);
+}
+//printf("12");
+//argv and argc address to stack
+void *argv_address=if_.esp;
+if_.esp-=4;
+memcpy(if_.esp, &argv_address,4);
+if_.esp-=4;
+++argc;
+//printf("%d\n", argc);
+memcpy(if_.esp, &argc, 4);
+//Fake address
+if_.esp-=4;
+memset(if_.esp,  0, 4);
+//printf("Finishing pushing arg \n");
+free(addresses);
+free(argv);
+//hex_dump(if_.esp, if_.esp, PHYS_BASE-if_.esp, true);  
+ 
+ /* Start the user process by simulating a return from an
      interrupt, implemented by intr_exit (in
      threads/intr-stubs.S).  Because intr_exit takes all of its
      arguments on the stack in the form of a `struct intr_frame',
@@ -87,8 +150,10 @@ start_process (void *file_name_)
    does nothing. */
 int
 process_wait (tid_t child_tid UNUSED) 
+
 {
-  return -1;
+ while(1);
+//	return -1;
 }
 
 /* Free the current process's resources. */
@@ -441,6 +506,8 @@ setup_stack (void **esp)
       else
         palloc_free_page (kpage);
     }
+  
+//hex_dump(*esp, *esp, PHYS_BASE-*esp, true);  
   return success;
 }
 
