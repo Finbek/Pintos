@@ -17,11 +17,14 @@ syscall_init (void)
   intr_register_int (0x30, 3, INTR_ON, syscall_handler, "syscall");
 }
 struct file_fd* find_file_fd(int fd_number);
+
+bool validation(void * addr);
+
 static void
 syscall_handler (struct intr_frame *f) 
 {
   //printf ("system call!\n");
-  if(is_user_vaddr(f->esp) && pagedir_get_page(thread_current()->pagedir,(f->esp)!=NULL))
+  if(validation(f->esp))
   {
   	int code = *(int*)f->esp;
 	
@@ -29,72 +32,128 @@ syscall_handler (struct intr_frame *f)
 		halt();
 	if(code == SYS_EXIT)
 	{
+		if(!validation(f->esp+1))
+			exit(-1);
+		else
+		{
 		int status = *((int*)f->esp+1);
 		exit(status);
+		}
 	}
 	if(code ==SYS_EXEC)
 	{
+		if(!validation(f->esp+1))
+                        exit(-1);
+                else
+                {
 		const char* cmd_line = (char*)(*((int*)f->esp+1));
 		f->eax=exec(cmd_line);//CHECK THIS PID CHILD
-		 
+		 }
 	} 
 	if(code == SYS_WAIT)
 	{
+		if(!validation(f->esp+1))
+                        exit(-1);
+                else
+                {
 		pid_t pid =(pid_t*) (*((int*)f->esp+1));
 		f->eax = wait(pid);
+		}
 	}
 	if(code == SYS_CREATE){
-		const char* file = (char*)(*((int*)f->esp+1));
-		unsigned initial_size =*((unsigned*)f->esp+2);
+		if(!validation(f->esp+4) || !validation(f->esp+5))
+                        exit(-1);
+                else
+                {
+		const char* file = (char*)(*((int*)f->esp+4));
+		unsigned initial_size =*((unsigned*)f->esp+5);
 		f->eax = create(file, initial_size);
+		}
 	}
 	if(code == SYS_REMOVE)
 	{
+		if(!validation(f->esp+1))
+                        exit(-1);
+                else
+                {
 		const char* file = (char*)(*((int*)f->esp+1));
 		f->eax = remove(file);
+		}
 	}
 	if(code == SYS_OPEN)
-	{	
+	{	if(!validation(f->esp+1))
+                        exit(-1);
+                else
+                {
 		const char* file = (char*)(*((int*)f->esp+1));
 		f->eax = open(file);
+		}
 	}
 	if(code == SYS_FILESIZE)
-	{
+	{	
+		if(!validation(f->esp+1))
+                        exit(-1);
+                else
+                {
 		int fd = *((int*)f->esp+1);
 		f->eax = filesize(fd);
+		}
 	}
 	if(code == SYS_READ)
-	{
+	{	if(!validation(f->esp+5)||!validation(f->esp+6)||!validation(f->esp+7))
+                        exit(-1);
+                else
+                {
 		
-		int fd = *((int*)f->esp+1);
-		void* buffer = (void*)(*((int*)f->esp+2));
-		unsigned size = *((unsigned*)f->esp+3);
+		int fd = *((int*)f->esp+5);
+		void* buffer = (void*)(*((int*)f->esp+6));
+		unsigned size = *((unsigned*)f->esp+7);
 		f->eax = read(fd, buffer, size);
+		}
 	}
 	if(code == SYS_WRITE)
 	{
-		int fd = *((int*)f->esp+1);
-		void* buffer = (void*)(*((int*)f->esp+2));
-		unsigned size = *((unsigned*)f->esp+3);
-		f->eax = write(fd, buffer, size);
+		 if(!validation(f->esp+5)||!validation(f->esp+6)||!validation(f->esp+7))
+                        exit(-1);
+                else
+                {
+                	int fd = *((int*)f->esp+5);
+                	void* buffer = (void*)(*((int*)f->esp+6));
+                	unsigned size = *((unsigned*)f->esp+7);
+			f->eax = write(fd, buffer, size);
+		}
 	}		
 	if(code == SYS_SEEK)
 	{
-		
-		int fd = *((int*)f->esp+1);
-		unsigned position = *((unsigned*)f->esp+3);
+		if(!validation(f->esp+4) || !validation(f->esp+5))
+                        exit(-1);
+                else
+		{
+		int fd = *((int*)f->esp+4);
+		unsigned position = *((unsigned*)f->esp+5);
 		seek(fd, position);
+		}
 	}
 	if(code == SYS_TELL)
-	{
+	{	
+		if(!validation(f->esp+1))
+                        exit(-1);
+                else
+                {
 		int fd = *((int*)f->esp+1);
 		f->eax = tell(fd);
+		}
 	}
 	if(code == SYS_CLOSE)
  	{
+		if(!validation(f->esp+1))
+                        exit(-1);
+                else
+                {
 		int fd = *((int*)f->esp+1);
 		close(fd);	
-	}		
+		}
+	}	
   }
   else
   {
@@ -102,6 +161,12 @@ syscall_handler (struct intr_frame *f)
   	exit(-1);
   }
 }
+
+bool validation(void* addr)
+{
+	return (addr!=NULL &&is_user_vaddr(addr) && pagedir_get_page(thread_current()->pagedir,(addr)!=NULL));
+}
+
 
 void 
 halt (void)
@@ -129,7 +194,6 @@ bool create (const char *file, unsigned initial_size)
 {
 //Synchronization LOOOOOOK UP LATER
   bool success = false; 
-  if(is_user_vaddr(file) && pagedir_get_page(thread_current()->pagedir,(file)!=NULL))
 	success = filesys_create(file, initial_size);
   return success;	
 }
@@ -137,7 +201,6 @@ bool create (const char *file, unsigned initial_size)
 bool remove (const char *file)
 {
     bool success = false;
-  if(is_user_vaddr(file) && pagedir_get_page(thread_current()->pagedir,(file)!=NULL))
 	success = filesys_remove(file);
   return success;
 }
@@ -146,8 +209,7 @@ int open (const char *file)
 {
   int success = -1;
   static int fd_number = 2;
-  if(is_user_vaddr(file) && pagedir_get_page(thread_current()->pagedir,(file)!=NULL))
-	{
+	
 		struct file* open_file = filesys_open(file);
 		struct file_fd* fd = (struct file_fd*) malloc(sizeof(struct file_fd));
 		fd ->fd_numb = fd_number;
@@ -155,7 +217,7 @@ int open (const char *file)
 		fd+=1;
 		list_push_front(&thread_current()->list_fd, &fd->elem);
 		success =fd_number;		
-	}
+	
   return success;
 	
 }
