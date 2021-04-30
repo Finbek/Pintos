@@ -37,7 +37,7 @@ syscall_handler (struct intr_frame *f)
 	} 
 	if(code == SYS_WAIT)
 	{
-		pid_t pid =(pid*) (*((int*)f->esp+1));
+		pid_t pid =(pid_t*) (*((int*)f->esp+1));
 		f->eax = wait(pid);
 	}
 	if(code == SYS_CREATE){
@@ -95,7 +95,7 @@ syscall_handler (struct intr_frame *f)
   }
   else
   {
-  	printf("not valid address\n");
+  	//printf("not valid address\n");
   	exit(-1);
   }
 }
