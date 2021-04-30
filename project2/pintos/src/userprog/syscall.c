@@ -108,7 +108,7 @@ halt (void)
 
 void exit (int status)
 {
-
+   thread_exit();
 }
 
 pid_t
@@ -144,6 +144,7 @@ int filesize (int fd)
 
 int read (int fd, void *buffer, unsigned size)
 {
+  
   return -1;
 }
 
