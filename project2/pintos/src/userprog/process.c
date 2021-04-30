@@ -11,7 +11,7 @@
 #include "filesys/directory.h"
 #include "filesys/file.h"
 #include "filesys/filesys.h"
-#include "lib/stdio.h"
+//#include "lib/stdio.h"
 #include "threads/flags.h"
 #include "threads/init.h"
 #include "threads/interrupt.h"
@@ -100,7 +100,7 @@ for(i = argc; i>=0; i--)
         memcpy(if_.esp, argv[i], strlen(argv[i])+1);
 }
 //Adding padding and allignment
-for(i=0; i<((uintptr_t)if_.esp)%4; i++){
+for(i=0; i<(uintptr_t)if_.esp%4; i++){
 	if_.esp-=1;
 	memset(if_.esp,0,1);
         }
@@ -152,7 +152,8 @@ int
 process_wait (tid_t child_tid UNUSED) 
 
 {
- while(1);
+ while(1);//temporary running process infinitely CHANGE IT LATER
+
 //	return -1;
 }
 
