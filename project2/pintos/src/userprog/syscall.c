@@ -259,7 +259,10 @@ int open (const char *file)
 }
 
 struct file_fd* find_file_fd(int fd_number)
-	{	 struct list_elem* first = list_begin(&thread_current()->list_fd);
+	{	 
+		if(list_empty(&thread_current()->list_fd))
+			return NULL;
+		struct list_elem* first = list_begin(&thread_current()->list_fd);
 	 	 struct list_elem* last = list_end(&thread_current()->list_fd);
 		struct file_fd* a; 
 		while (first!=last)
@@ -275,6 +278,7 @@ struct file_fd* find_file_fd(int fd_number)
                         {
                                 return a;
                          }
+		return NULL;
 
 }
 
@@ -320,6 +324,7 @@ int read (int fd, void *buffer, unsigned size)
 int write (int fd, const void *buffer, unsigned size)
 {	
 int success =0;
+	lock_acquire(&critical_section);
 	if(fd==0){
 		putbuf(buffer, size);
 		return size;
@@ -327,6 +332,7 @@ int success =0;
 	struct file_fd* a = find_file_fd(fd);
               if(a!=NULL)
                         success = file_write(a->file, buffer, size);
+	lock_release(&critical_section);
 	return success;
 }
 
@@ -334,21 +340,31 @@ void seek (int fd, unsigned position)
 {
 	 struct file_fd* a = find_file_fd(fd);
       	 struct file* f = a->file; 
+	lock_acquire(&critical_section);
 			file_seek(f, position);
+	lock_release(&critical_section);
 
 }
 
 unsigned tell (int fd)
 {
+	unsigned success = -1;
 	struct file_fd* a = find_file_fd(fd);
                 if(a!=NULL)
-                	return file_tell(a->file);
-	return 0;
+		lock_acquire(&critical_section);
+                 success = file_tell(a->file);
+		lock_release(&critical_section);
+	return success;
 }
 
 void close (int fd)
 {
 	struct file_fd* a = find_file_fd(fd);
+	if(a!=NULL)
+	{
+	lock_acquire(&critical_section);
 	file_close(a->file);
-	list_remove(&a->elem);  
+	list_remove(&a->elem); 
+	lock_release(&critical_section);
+	} 
 }
