@@ -156,26 +156,24 @@ process_wait (tid_t child_tid UNUSED)
   if (!t->have_children)
     return -1;
   
-  struct child *cur_child;
+  struct child *c;
   struct list_elem *e;
-  for (e = list.begin(&(t->children),); e != list_end(&(t->children)); e = list_next(e))
+  for(e = list_begin(&t->children); e != list_end(&t->children); e = list_next(e))
   {
-     cur_child = list_entry(e, struct child, elem);
-     if (cur_child->tid == child_tid)
-     {
-	e = list_end(&(t->children));
-     }
+	c = list_entry(e, struct child, elem);
+	if(c->tid == child_tid)
+	{
+	  if (c->is_waited)
+	    return -1;
+	  else 
+	    c->is_waited = true;
+	  while(!c->exited)
+		thread_yield();
+	  return c->status;
+	}
   }
-  if(cur_child->is_waited)
-  {
-      return -1;
-  } else {
-      cur_child->is_waited = true;
-  }
-  while(!cur_child->exited)
-      thread_yield;
-  
-  return cur_child->status;
+ 
+  return -1;
 }
 
 /* Free the current process's resources. */

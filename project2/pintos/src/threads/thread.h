@@ -90,11 +90,11 @@ struct file_fd
 struct child
 {
   struct list_elem elem;
-  bool is_waited = false;
+  bool is_waited;
   tid_t tid;
-  int status = 0;
-  bool exited = false;
-}
+  int status;
+  bool exited;
+};
 struct thread
   {
     /* Owned by thread.c. */
@@ -116,10 +116,9 @@ struct thread
     struct list executable_files;
     struct list list_fd;  
     /*parent-child*/
-    bool have_children = false;
-    struct list children;
-    struct child *this_child;
-     
+    bool have_children;
+    struct child *info;
+    struct list children;   
 #endif
 
     /* Owned by thread.c. */
@@ -156,6 +155,8 @@ void thread_foreach (thread_action_func *, void *);
 
 int thread_get_priority (void);
 void thread_set_priority (int);
+
+struct thread* find_child(tid_t);
 
 int thread_get_nice (void);
 void thread_set_nice (int);

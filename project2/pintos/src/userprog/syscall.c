@@ -177,24 +177,32 @@ halt (void)
 void exit (int status)
 {
    struct thread *t = thread_current();
-   if (t->this_child->is_waited)
+   if (t->info->is_waited)
    {
-      t->this_child->exited = true;
-      t->this_child->status = status;
+      t->info->exited = true;
+      t->info->status = status;
    }
-   
+   printf ("Process %s exited with status(%d)\n", thread_current ()->name, status);
    thread_exit();
 }
 
 pid_t
 exec (const char *cmd_line)
 {
-return -1;
+  struct thread *t = thread_current();
+  
+  pid_t pid = process_execute(cmd_line);
+  if (pid == TID_ERROR)
+     return pid;
+  t->have_children = true;
+  struct thread *child_thread = find_child(pid);
+  list_push_back(&t->children, &child_thread->info->elem);
+  return pid;
 }
 
 int wait (pid_t pid)
 {
-return process_wait(pid);
+  return process_wait(pid);
 }
 
 bool create (const char *file, unsigned initial_size)

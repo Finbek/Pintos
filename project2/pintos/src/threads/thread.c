@@ -92,8 +92,8 @@ thread_init (void)
   lock_init (&tid_lock);
   list_init (&ready_list);
   list_init (&all_list);
-
-  /* Set up a thread structure for the running thread. */
+  
+    /* Set up a thread structure for the running thread. */
   initial_thread = running_thread ();
   init_thread (initial_thread, "main", PRI_DEFAULT);
   initial_thread->status = THREAD_RUNNING;
@@ -183,7 +183,7 @@ thread_create (const char *name, int priority,
   /* Initialize thread. */
   init_thread (t, name, priority);
   tid = t->tid = allocate_tid ();
-
+  t->info->tid = tid;
   /* Prepare thread for first run by initializing its stack.
      Do this atomically so intermediate values for the 'stack' 
      member cannot be observed. */
@@ -467,12 +467,31 @@ init_thread (struct thread *t, const char *name, int priority)
   t->status = THREAD_BLOCKED;
   strlcpy (t->name, name, sizeof t->name);
   t->stack = (uint8_t *) t + PGSIZE;
-  t->priority = priority;
+  t->priority = priority; 
   t->magic = THREAD_MAGIC;
 #ifdef USERPROG
+  t->have_children = false;
+  t->info->is_waited = false;
+  t->info->status = 0;
+  t->info->exited = false;
+  list_init(&t->children);
   list_init(&t->list_fd);
 #endif
   list_push_back (&all_list, &t->allelem);
+}
+
+struct thread*
+find_child(tid_t tid)
+{
+	struct thread *t;
+	struct list_elem *e;
+	for (e = list_begin(&all_list); e != list_end (&all_list); e = list_next(e))
+	{
+		t = list_entry(e, struct thread, allelem);
+		if (t->tid == tid)
+			return t;
+	}
+	return NULL;
 }
 
 /* Allocates a SIZE-byte frame at the top of thread T's stack and
