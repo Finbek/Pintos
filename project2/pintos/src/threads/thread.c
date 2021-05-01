@@ -470,7 +470,7 @@ init_thread (struct thread *t, const char *name, int priority)
   t->priority = priority; 
   t->magic = THREAD_MAGIC;
 #ifdef USERPROG
-  t->have_children = false;
+  t->is_waited = false;
   t->is_child = false;
   list_init(&t->children);
   list_init(&t->list_fd);

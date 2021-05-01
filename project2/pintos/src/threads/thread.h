@@ -90,10 +90,8 @@ struct file_fd
 struct child
 {
   struct list_elem elem;
-  bool is_waited;
   tid_t tid;
   int status;
-  bool exited;
 };
 struct thread
   {
@@ -116,7 +114,7 @@ struct thread
     struct list executable_files;
     struct list list_fd;  
     /*parent-child*/
-    bool have_children;
+    bool is_waited;
     tid_t parent;
     struct list children;
     bool is_child;   
