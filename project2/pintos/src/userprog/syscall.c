@@ -270,10 +270,7 @@ int filesize (int fd)
 
 int read (int fd, void *buffer, unsigned size)
 {
-<<<<<<< HEAD
   
-  return -1;
-=======
   int success = -1;
   if(is_user_vaddr(buffer) && pagedir_get_page(thread_current()->pagedir,(buffer)!=NULL))
         {	if(fd ==0)
@@ -294,7 +291,6 @@ int read (int fd, void *buffer, unsigned size)
         }
         }
   return success;
->>>>>>> e8464536a3c5c507d040a59702fa48a33ba91131
 }
 
 int write (int fd, const void *buffer, unsigned size)
