@@ -117,8 +117,9 @@ struct thread
     struct list list_fd;  
     /*parent-child*/
     bool have_children;
-    struct child *info;
-    struct list children;   
+    tid_t parent;
+    struct list children;
+    bool is_child;   
 #endif
 
     /* Owned by thread.c. */
@@ -156,7 +157,7 @@ void thread_foreach (thread_action_func *, void *);
 int thread_get_priority (void);
 void thread_set_priority (int);
 
-struct thread* find_child(tid_t);
+struct thread* find_thread(tid_t);
 
 int thread_get_nice (void);
 void thread_set_nice (int);

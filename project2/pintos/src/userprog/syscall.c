@@ -3,6 +3,7 @@
 #include <syscall-nr.h>
 #include "threads/interrupt.h"
 #include "threads/thread.h"
+#include "userprog/process.h"
 
 #include "filesys/filesys.h"
 #include "threads/vaddr.h"
@@ -177,12 +178,26 @@ halt (void)
 void exit (int status)
 {
    struct thread *t = thread_current();
-   if (t->info->is_waited)
+   if (t->is_child)
    {
-      t->info->exited = true;
-      t->info->status = status;
+     struct thread *parent = find_thread(t->parent);
+     if (parent != NULL)
+     {
+	struct child *c;
+	struct list_elem *e;
+        for(e = list_begin(&parent->children); e != list_end(&parent->children); e = list_next(e))
+	{
+	  child = list_entry(e, struct child, elem);
+	  if (child->tid == t->tid)
+  	  {
+	     child->exited = true;
+	     child->status = status;
+	     e = list_end(&parent->children);
+	  }
+	}
+     }
    }
-   printf ("Process %s exited with status(%d)\n", thread_current ()->name, status);
+   printf ("Process %s exited with status(%d)\n", t->name, status);
    thread_exit();
 }
 

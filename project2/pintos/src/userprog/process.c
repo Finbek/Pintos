@@ -152,7 +152,7 @@ int
 process_wait (tid_t child_tid UNUSED) 
 
 {
-  struct thread *t = thread_current();
+  /*struct thread *t = thread_current();
   if (!t->have_children)
     return -1;
   
@@ -171,8 +171,8 @@ process_wait (tid_t child_tid UNUSED)
 		thread_yield();
 	  return c->status;
 	}
-  }
- 
+  }*/
+ while(1);
   return -1;
 }
 

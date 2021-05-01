@@ -183,7 +183,7 @@ thread_create (const char *name, int priority,
   /* Initialize thread. */
   init_thread (t, name, priority);
   tid = t->tid = allocate_tid ();
-  t->info->tid = tid;
+  
   /* Prepare thread for first run by initializing its stack.
      Do this atomically so intermediate values for the 'stack' 
      member cannot be observed. */
@@ -432,7 +432,7 @@ kernel_thread (thread_func *function, void *aux)
   function (aux);       /* Execute the thread function. */
   thread_exit ();       /* If function() returns, kill the thread. */
 }
-
+
 /* Returns the running thread. */
 struct thread *
 running_thread (void) 
@@ -471,9 +471,7 @@ init_thread (struct thread *t, const char *name, int priority)
   t->magic = THREAD_MAGIC;
 #ifdef USERPROG
   t->have_children = false;
-  t->info->is_waited = false;
-  t->info->status = 0;
-  t->info->exited = false;
+  t->is_child = false;
   list_init(&t->children);
   list_init(&t->list_fd);
 #endif
@@ -481,7 +479,7 @@ init_thread (struct thread *t, const char *name, int priority)
 }
 
 struct thread*
-find_child(tid_t tid)
+find_thread(tid_t tid)
 {
 	struct thread *t;
 	struct list_elem *e;
