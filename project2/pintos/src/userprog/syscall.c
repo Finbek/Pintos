@@ -10,11 +10,14 @@
 #include "userprog/pagedir.h"
 #include "threads/malloc.h"
 #include <list.h>
+#include "threads/synch.h"
 static void syscall_handler (struct intr_frame *);
 
+struct lock critical_section;
 void
 syscall_init (void) 
 {
+  lock_init(&critical_section);
   intr_register_int (0x30, 3, INTR_ON, syscall_handler, "syscall");
 }
 struct file_fd* find_file_fd(int fd_number);
@@ -187,6 +190,7 @@ void exit (int status)
 	status_child->status = status;
 	status_child->tid = t->tid;
 	list_push_front(&parent->status_list, &status_child->elem);
+	sema_up(&parent->parent_sleep);
      }
    }
    printf ("Process %s exited with status(%d)\n", t->name, status);
@@ -214,16 +218,19 @@ int wait (pid_t pid)
 
 bool create (const char *file, unsigned initial_size)
 {
-//Synchronization LOOOOOOK UP LATER
   bool success = false; 
+	lock_acquire(&critical_section);
 	success = filesys_create(file, initial_size);
+	lock_release(&critical_section);
   return success;	
 }
 
 bool remove (const char *file)
 {
     bool success = false;
+	lock_acquire(&critical_section);
 	success = filesys_remove(file);
+	lock_release(&critical_section);
   return success;
 }
 
@@ -231,15 +238,22 @@ int open (const char *file)
 {
   int success = -1;
   static int fd_number = 2;
-	
+		
+		lock_acquire(&critical_section);
 		struct file* open_file = filesys_open(file);
+		if(file==NULL)
+		{
+			return -1;
+			lock_release(&critical_section);
+		}
 		struct file_fd* fd = (struct file_fd*) malloc(sizeof(struct file_fd));
 		fd ->fd_numb = fd_number;
 		fd->file = open_file;
-		fd+=1;
+		fd_number+=1;
 		list_push_front(&thread_current()->list_fd, &fd->elem);
 		success =fd_number;		
 	
+  lock_acquire(&critical_section);
   return success;
 	
 }
@@ -270,7 +284,9 @@ int filesize (int fd)
   int success = -1;
   struct file_fd* a = find_file_fd(fd);
   if(a!=NULL)
+	lock_acquire(&critical_section);
 	success = file_length(a->file);
+	lock_release(&critical_section);
 	
   return success;
 }
@@ -279,8 +295,8 @@ int read (int fd, void *buffer, unsigned size)
 {
   
   int success = -1;
-  if(is_user_vaddr(buffer) && pagedir_get_page(thread_current()->pagedir,(buffer)!=NULL))
-        {	if(fd ==0)
+	lock_acquire(&critical_section);
+ 	if(fd ==0)
 		{	int i =0;
 			while(i<size)
 			{
@@ -295,8 +311,9 @@ int read (int fd, void *buffer, unsigned size)
                 	struct file_fd* a = find_file_fd(fd);
                 	if(a!=NULL)
                         	success = file_read(a->file, buffer, size);
-        }
-        }
+       		 }
+        
+	lock_release(&critical_section);
   return success;
 }
 
