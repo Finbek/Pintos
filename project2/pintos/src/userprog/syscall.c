@@ -178,8 +178,22 @@ halt (void)
   shutdown_power_off();
 }
 
+void close_fds()
+	{
+		if(list_empty(&thread_current()->list_fd));
+                        return;
+                struct list_elem* first = list_begin(&thread_current()->list_fd);
+                struct list_elem* last = list_end(&thread_current()->list_fd);
+                struct file_fd* a;
+                while (first!=last)
+                 {      a = list_entry(first, struct file_fd, elem);
+                        first=list_next(first);
+			close(a);
+                }
+	}
 void exit (int status)
 {
+   close_fds();
    struct thread *t = thread_current();
    if (t->is_child)
    {
@@ -252,7 +266,7 @@ int open (const char *file)
 		fd_number+=1;
 		list_push_front(&thread_current()->list_fd, &fd->elem);
 		success =fd_number;		
-	
+		
   lock_acquire(&critical_section);
   return success;
 	
@@ -260,7 +274,7 @@ int open (const char *file)
 
 struct file_fd* find_file_fd(int fd_number)
 	{	 
-		if(list_empty(&thread_current()->list_fd))
+		if(list_empty(&thread_current()->list_fd));
 			return NULL;
 		struct list_elem* first = list_begin(&thread_current()->list_fd);
 	 	 struct list_elem* last = list_end(&thread_current()->list_fd);
@@ -271,6 +285,7 @@ struct file_fd* find_file_fd(int fd_number)
 			{
 				return a;
 	       		 }
+			first = list_next(first);
 	 
 		}
 		a = list_entry(first, struct file_fd, elem);
@@ -362,9 +377,7 @@ void close (int fd)
 	struct file_fd* a = find_file_fd(fd);
 	if(a!=NULL)
 	{
-	lock_acquire(&critical_section);
 	file_close(a->file);
 	list_remove(&a->elem); 
-	lock_release(&critical_section);
 	} 
 }
