@@ -474,6 +474,7 @@ init_thread (struct thread *t, const char *name, int priority)
   t->is_child = false;
   list_init(&t->children);
   list_init(&t->list_fd);
+  list_init(&t->status_list);
   sema_init(&t->parent_sleep, 0);
 #endif
   list_push_back (&all_list, &t->allelem);

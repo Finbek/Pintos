@@ -183,18 +183,10 @@ void exit (int status)
      struct thread *parent = find_thread(t->parent);
      if (parent != NULL)
      {
-	struct child *c;
-	struct list_elem *e;
-        for(e = list_begin(&parent->children); e != list_end(&parent->children); e = list_next(e))
-	{
-	  child = list_entry(e, struct child, elem);
-	  if (child->tid == t->tid)
-  	  {
-	     child->exited = true;
-	     child->status = status;
-	     e = list_end(&parent->children);
-	  }
-	}
+	struct child * status_child = (struct child*) malloc(sizeof(struct child));
+	status_child->status = status;
+	status_child->tid = t->tid;
+	list_push_front(&parent->status_list, &status_child->elem);
      }
    }
    printf ("Process %s exited with status(%d)\n", t->name, status);
@@ -204,7 +196,7 @@ void exit (int status)
 pid_t
 exec (const char *cmd_line)
 {
-  struct thread *t = thread_current();
+ /* struct thread *t = thread_current();
   
   pid_t pid = process_execute(cmd_line);
   if (pid == TID_ERROR)
@@ -212,7 +204,7 @@ exec (const char *cmd_line)
   t->have_children = true;
   struct thread *child_thread = find_child(pid);
   list_push_back(&t->children, &child_thread->info->elem);
-  return pid;
+  return pid;*/
 }
 
 int wait (pid_t pid)

@@ -149,31 +149,35 @@ free(argv);
    This function will be implemented in problem 2-2.  For now, it
    does nothing. */
 int
-process_wait (tid_t child_tid UNUSED) 
+process_wait (tid_t child_tid) 
 
 {
-  /*struct thread *t = thread_current();
-  if (!t->have_children)
-    return -1;
+  struct thread* child=NULL;
+  struct thread* parent;
   
-  struct child *c;
   struct list_elem *e;
-  for(e = list_begin(&t->children); e != list_end(&t->children); e = list_next(e))
+  for(e = list_begin(&parent->children); e != list_end(&parent->children); e = list_next(e))
   {
-	c = list_entry(e, struct child, elem);
-	if(c->tid == child_tid)
+	child = list_entry(e, struct thread, elem);
+	if(child->tid == child_tid)
 	{
-	  if (c->is_waited)
+	  if (child->is_waited)
 	    return -1;
 	  else 
-	    c->is_waited = true;
-	  while(!c->exited)
-		thread_yield();
-	  return c->status;
+	    child->is_waited = true;
 	}
-  }*/
- while(1);
-  return -1;
+  }
+  if(child==NULL)
+	return -1;
+  sema_down(&parent->parent_sleep);
+  struct child* ch; 
+  for(e = list_begin(&parent->status_list); e != list_end(&parent->status_list); e = list_next(e))
+	{
+	    ch = list_entry(e, struct child, elem);
+	if(ch->tid ==child_tid)
+		return ch->status;
+	}
+	return -1;
 }
 
 /* Free the current process's resources. */

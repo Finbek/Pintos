@@ -5,6 +5,7 @@
 #include <list.h>
 #include <stdint.h>
 #include "filesys/file.h"
+#include "synch.h"
 /* States in a thread's life cycle. */
 enum thread_status
   {
@@ -118,7 +119,8 @@ struct thread
     tid_t parent;
     struct list children;
     bool is_child;
-    struct semaphore parent_sleep;   
+    struct semaphore parent_sleep; 
+    struct list status_list;  
 #endif
 
     /* Owned by thread.c. */
