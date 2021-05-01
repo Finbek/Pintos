@@ -117,7 +117,8 @@ struct thread
     bool is_waited;
     tid_t parent;
     struct list children;
-    bool is_child;   
+    bool is_child;
+    struct semaphore parent_sleep;   
 #endif
 
     /* Owned by thread.c. */
