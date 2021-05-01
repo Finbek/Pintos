@@ -152,9 +152,30 @@ int
 process_wait (tid_t child_tid UNUSED) 
 
 {
- while(1);//temporary running process infinitely CHANGE IT LATER
-
-//	return -1;
+  struct thread *t = thread_current();
+  if (!t->have_children)
+    return -1;
+  
+  struct child *cur_child;
+  struct list_elem *e;
+  for (e = list.begin(&(t->children),); e != list_end(&(t->children)); e = list_next(e))
+  {
+     cur_child = list_entry(e, struct child, elem);
+     if (cur_child->tid == child_tid)
+     {
+	e = list_end(&(t->children));
+     }
+  }
+  if(cur_child->is_waited)
+  {
+      return -1;
+  } else {
+      cur_child->is_waited = true;
+  }
+  while(!cur_child->exited)
+      thread_yield;
+  
+  return cur_child->status;
 }
 
 /* Free the current process's resources. */
