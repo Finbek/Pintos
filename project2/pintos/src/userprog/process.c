@@ -49,6 +49,8 @@ process_execute (const char *file_name)
     }
   struct thread* child = find_thread(tid);
   struct thread* parent = thread_current();
+  child->parent = parent->tid;
+  child ->is_child = true;
   list_push_front(&parent->children, &child->child_elem); 
   return tid;
 }
@@ -167,10 +169,12 @@ process_wait (tid_t child_tid)
 	    child->is_waited = true;
 	}
   }
+ printf("\nParent Sleep\n");
   if(child==NULL)
 	return -1;
   sema_down(&parent->parent_sleep);
-  struct child* ch; 
+  struct child* ch;
+  printf("\nParent wakre up\n"); 
   for(e = list_begin(&parent->status_list); e != list_end(&parent->status_list); e = list_next(e))
 	{
 	    ch = list_entry(e, struct child, elem);

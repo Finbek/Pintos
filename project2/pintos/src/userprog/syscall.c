@@ -27,13 +27,9 @@ bool validation(void * addr);
 static void
 syscall_handler (struct intr_frame *f) 
 {
-  printf("\n Validation\n");
   if(validation(f->esp))
   {
   	int code = *(int*)f->esp;
-	printf("syscall num : %d\n", code);
-        hex_dump(f->esp, f->esp, 100,1);
-	printf ("system call!\n");
 
 
 	if(code==SYS_HALT)
@@ -125,6 +121,7 @@ syscall_handler (struct intr_frame *f)
                         exit(-1);
                 else
                 {
+			printf("HERE");
                 	int fd = *((int*)f->esp+5);
                 	void* buffer = (void*)(*((int*)f->esp+6));
                 	unsigned size = *((unsigned*)f->esp+7);
@@ -172,6 +169,7 @@ syscall_handler (struct intr_frame *f)
 
 bool validation(void* addr)
 {
+	return true;
 	return (addr!=NULL &&is_user_vaddr(addr) && pagedir_get_page(thread_current()->pagedir,(addr)!=NULL));
 }
 
@@ -197,6 +195,7 @@ void close_fds()
 	}
 void exit (int status)
 {
+   printf("Exiting");
    close_fds();
    struct thread *t = thread_current();
    if (t->is_child)
@@ -204,6 +203,7 @@ void exit (int status)
      struct thread *parent = find_thread(t->parent);
      if (parent != NULL)
      {
+	printf("I have dad");
 	struct child * status_child = (struct child*) malloc(sizeof(struct child));
 	status_child->status = status;
 	status_child->tid = t->tid;
@@ -221,7 +221,12 @@ void exit (int status)
             e = list_end(&parent->children);
           }
         }
+   	printf ("%s: exit(%d)\n", t->name, status);
+        printf("\nWAKEUP\n");
+   	thread_exit();
+        printf("\nWAKEUP\n");
 	sema_up(&parent->parent_sleep);
+        return;
      }
    }
    printf ("%s: exit(%d)\n", t->name, status);
@@ -358,6 +363,9 @@ int read (int fd, void *buffer, unsigned size)
 int write (int fd, const void *buffer, unsigned size)
 {	
 int success =0;
+	printf("\nWritting to the disk\n");
+        printf("\n%d\n", fd);
+        printf("\n%d\n", size);
 	lock_acquire(&critical_section);
 	if(fd==0){
 		putbuf(buffer, size);
