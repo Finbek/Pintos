@@ -209,10 +209,9 @@ void exit (int status)
 	status_child->tid = t->tid;
 	list_push_front(&parent->status_list, &status_child->elem);
 	/*remove exiting thread from parent->children*/
-        struct list_elem *e;
+        struct list_elem *e = list_begin(&parent->children);
         struct thread *cur;
-        for(e = list_begin(&parent->children); e != list_end(&parent->children);
-                e = list_next(e))
+        while (e != list_end(&parent->children))
         {
           cur = list_entry(e, struct thread, child_elem);
           if (cur->tid == t->tid)
@@ -220,6 +219,10 @@ void exit (int status)
             list_remove(e);
             e = list_end(&parent->children);
           }
+	  else 
+          {
+            e = list_next(e);
+	  }
         }
    	printf ("%s: exit(%d)\n", t->name, status);
         printf("\nWAKEUP\n");
@@ -239,7 +242,7 @@ exec (const char *cmd_line)
   struct thread *t = thread_current();
   printf("exec 1:%s\n", cmd_line);
   pid_t pid = process_execute(cmd_line);
-  sema_down(&t->parent_sleep);
+  //sema_down(&t->parent_sleep);
   if (pid == TID_ERROR)
   {
      printf("pid is tid error\n");
