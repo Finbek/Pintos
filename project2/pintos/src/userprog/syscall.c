@@ -229,17 +229,15 @@ void exit (int status)
 
 pid_t
 exec (const char *cmd_line)
-{/*
+{
   struct thread *t = thread_current();
-  
+
   pid_t pid = process_execute(cmd_line);
+  sema_down(&t->parent_sleep);
   if (pid == TID_ERROR)
-     return pid;
-  t->have_children = true;
-  struct thread *child_thread = find_child(pid);
-  list_push_back(&t->children, &child_thread->info->elem);
-  */
-  return TID_ERROR;
+     return -1;
+
+  return pid;
 }
 
 int wait (pid_t pid)
