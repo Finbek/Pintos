@@ -27,11 +27,12 @@ bool validation(void * addr);
 static void
 syscall_handler (struct intr_frame *f) 
 {
-  //printf ("system call!\n");
+  printf("\n Validation\n");
   if(validation(f->esp))
   {
   	int code = *(int*)f->esp;
 	printf("syscall num : %d\n", code);
+        hex_dump(f->esp, f->esp, 100,1);
 	printf ("system call!\n");
 
 
