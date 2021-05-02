@@ -195,6 +195,8 @@ void close_fds()
 void exit (int status)
 {
    close_fds();
+   if(lock_held_by_current_thread(&critical_section))
+	lock_release(&critical_section);
    struct thread *t = thread_current();
    if (t->is_child)
    {
