@@ -237,7 +237,12 @@ exec (const char *cmd_line)
 {
   struct thread *t = thread_current();
   printf("exec 1:%s\n", cmd_line);
+  if (!lock_held_by_current_thread(&critical_section))
+      while(!lock_try_acquire(&critical_section))
+              thread_yield();
   pid_t pid = process_execute(cmd_line);
+  if (lock_held_by_current_thread(&critical_section))
+      lock_release(&critical_section);
   //sema_down(&t->parent_sleep);
   if (pid == TID_ERROR)
   {
@@ -256,18 +261,24 @@ int wait (pid_t pid)
 bool create (const char *file, unsigned initial_size)
 {
   bool success = false; 
-	lock_acquire(&critical_section);
+	if (!lock_held_by_current_thread(&critical_section))
+		while(!lock_try_acquire(&critical_section))
+        	        thread_yield();
 	success = filesys_create(file, initial_size);
-	lock_release(&critical_section);
+	if (lock_held_by_current_thread(&critical_section))
+		lock_release(&critical_section);
   return success;	
 }
 
 bool remove (const char *file)
 {
     bool success = false;
-	lock_acquire(&critical_section);
+	if (!lock_held_by_current_thread(&critical_section))
+		while(!lock_try_acquire(&critical_section))
+                	thread_yield();
 	success = filesys_remove(file);
-	lock_release(&critical_section);
+	if (lock_held_by_current_thread(&critical_section))
+		lock_release(&critical_section);
   return success;
 }
 
@@ -275,12 +286,14 @@ int open (const char *file)
 {
   int success = -1;
   static int fd_number = 2;
-		
-		lock_acquire(&critical_section);
+		if (!lock_held_by_current_thread(&critical_section))
+			while(!lock_try_acquire(&critical_section))
+        	        	thread_yield();
 		struct file* open_file = filesys_open(file);
 		if(file==NULL)
 		{
-			lock_release(&critical_section);
+			if (lock_held_by_current_thread(&critical_section))
+				lock_release(&critical_section);
 			return -1;
 		}
 		struct file_fd* fd = (struct file_fd*) malloc(sizeof(struct file_fd));
@@ -290,7 +303,8 @@ int open (const char *file)
 		list_push_front(&thread_current()->list_fd, &fd->elem);
 		success =fd_number;		
 		
-	lock_release(&critical_section);
+	if (lock_held_by_current_thread(&critical_section))
+		lock_release(&critical_section);
   return success;
 	
 }
@@ -326,9 +340,12 @@ int filesize (int fd)
   int success = -1;
   struct file_fd* a = find_file_fd(fd);
   if(a!=NULL)
-	lock_acquire(&critical_section);
+	if (!lock_held_by_current_thread(&critical_section))
+		while (!lock_try_acquire(&critical_section))
+	  		thread_yield();
 	success = file_length(a->file);
-	lock_release(&critical_section);
+	if (lock_held_by_current_thread(&critical_section))
+		lock_release(&critical_section);
 	
   return success;
 }
@@ -337,7 +354,9 @@ int read (int fd, void *buffer, unsigned size)
 {
   
   int success = -1;
-	lock_acquire(&critical_section);
+	if (!lock_held_by_current_thread(&critical_section))
+		while(!lock_try_acquire(&critical_section))
+			thread_yield();
  	if(fd ==0)
 		{	int i =0;
 			while(i<size)
@@ -346,7 +365,8 @@ int read (int fd, void *buffer, unsigned size)
 				i+=1;
 			}
 		
-		lock_release(&critical_section);
+		if (lock_held_by_current_thread(&critical_section))
+			lock_release(&critical_section);
 		return i;
 		}
 		else{
@@ -356,23 +376,29 @@ int read (int fd, void *buffer, unsigned size)
                         	success = file_read(a->file, buffer, size);
        		 }
         
-	lock_release(&critical_section);
+	if (lock_held_by_current_thread(&critical_section))
+		lock_release(&critical_section);
   return success;
 }
 
 int write (int fd, const void *buffer, unsigned size)
 {	
 int success =0;
-	lock_acquire(&critical_section);
+
+	if (!lock_held_by_current_thread(&critical_section))
+		while(!lock_try_acquire(&critical_section))
+			thread_yield();
 	if(fd==1){
 		putbuf(buffer, size);
-		lock_release(&critical_section);
+		if (lock_held_by_current_thread(&critical_section))
+			lock_release(&critical_section);
 		return size;
 	}
 	struct file_fd* a = find_file_fd(fd);
               if(a!=NULL)
                         success = file_write(a->file, buffer, size);
-	lock_release(&critical_section);
+	if (lock_held_by_current_thread(&critical_section))
+		lock_release(&critical_section);
 	return success;
 }
 
@@ -380,9 +406,12 @@ void seek (int fd, unsigned position)
 {
 	 struct file_fd* a = find_file_fd(fd);
       	 struct file* f = a->file; 
-	lock_acquire(&critical_section);
-			file_seek(f, position);
-	lock_release(&critical_section);
+	if (!lock_held_by_current_thread(&critical_section))
+		while(!lock_try_acquire(&critical_section))
+			thread_yield();	
+		file_seek(f, position);
+	if (lock_held_by_current_thread(&critical_section))
+		lock_release(&critical_section);
 
 }
 
@@ -391,9 +420,12 @@ unsigned tell (int fd)
 	unsigned success = -1;
 	struct file_fd* a = find_file_fd(fd);
                 if(a!=NULL)
-{		lock_acquire(&critical_section);
+{		if (!lock_held_by_current_thread(&critical_section))
+			while(!lock_try_acquire(&critical_section))
+                		thread_yield();
                  success = file_tell(a->file);
-		lock_release(&critical_section);}
+		if (lock_held_by_current_thread(&critical_section))
+			lock_release(&critical_section);}
 	return success;
 }
 
@@ -402,9 +434,12 @@ void close (int fd)
 	struct file_fd* a = find_file_fd(fd);
 	if(a!=NULL)
 	{
-	lock_acquire(&critical_section);
+	if (!lock_held_by_current_thread(&critical_section))
+		while(!lock_try_acquire(&critical_section))
+                	thread_yield();
 	file_close(a->file);
-	lock_release(&critical_section);
+	if (lock_held_by_current_thread(&critical_section))
+		lock_release(&critical_section);
 	list_remove(&a->elem); 
 	} 
 }
