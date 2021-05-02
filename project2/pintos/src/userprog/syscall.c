@@ -195,7 +195,6 @@ void close_fds()
 	}
 void exit (int status)
 {
-   printf("Exiting");
    close_fds();
    struct thread *t = thread_current();
    if (t->is_child)
@@ -203,7 +202,6 @@ void exit (int status)
      struct thread *parent = find_thread(t->parent);
      if (parent != NULL)
      {
-	printf("I have dad");
 	struct child * status_child = (struct child*) malloc(sizeof(struct child));
 	status_child->status = status;
 	status_child->tid = t->tid;
@@ -224,10 +222,7 @@ void exit (int status)
             e = list_next(e);
 	  }
         }
-   	printf ("%s: exit(%d)\n", t->name, status);
-        printf("\nWAKEUP\n");
    	sema_up(&parent->parent_sleep);
-        printf("\nPARENT WOKEUP\n");
 	thread_exit();
         return;
      }

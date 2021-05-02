@@ -127,7 +127,6 @@ argc-=1;
 	free(addresses);
 	free(argv);
   //hex_dump(if_.esp, if_.esp, PHYS_BASE-if_.esp, true);  
-  printf("\n Startig user proc \n"); 
  /* Start the user process by simulating a return from an
      interrupt, implemented by intr_exit (in
      threads/intr-stubs.S).  Because intr_exit takes all of its
@@ -169,12 +168,10 @@ process_wait (tid_t child_tid)
 	    child->is_waited = true;
 	}
   }
- printf("\nParent Sleep\n");
   if(child==NULL)
 	return -1;
   sema_down(&parent->parent_sleep);
   struct child* ch;
-  printf("\nParent wakre up\n"); 
   for(e = list_begin(&parent->status_list); e != list_end(&parent->status_list); e = list_next(e))
 	{
 	    ch = list_entry(e, struct child, elem);
