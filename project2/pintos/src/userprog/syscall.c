@@ -168,8 +168,7 @@ syscall_handler (struct intr_frame *f)
 
 bool validation(void* addr)
 {
-	return true;
-	return (addr!=NULL &&is_user_vaddr(addr) && pagedir_get_page(thread_current()->pagedir,(addr)!=NULL));
+	return (is_user_vaddr(addr)&& (pagedir_get_page(thread_current()->pagedir,addr)!=NULL));
 }
 
 
