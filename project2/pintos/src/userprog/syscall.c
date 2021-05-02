@@ -370,7 +370,7 @@ int success =0;
         printf("\n%d\n", fd);
         printf("\n%d\n", size);
 	lock_acquire(&critical_section);
-	if(fd==0){
+	if(fd==1){
 		putbuf(buffer, size);
 		return size;
 	}
