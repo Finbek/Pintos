@@ -28,7 +28,7 @@ static void
 syscall_handler (struct intr_frame *f) 
 {
   //printf ("system call!\n");
-  if(validation(f->esp))
+ /* if(validation(f->esp))
   {
   	int code = *(int*)f->esp;
 	printf("syscall num : %d\n", code);
@@ -166,7 +166,7 @@ syscall_handler (struct intr_frame *f)
   {
   	//printf("not valid address\n");
   	exit(-1);
-  }
+  }*/ 
 }
 
 bool validation(void* addr)

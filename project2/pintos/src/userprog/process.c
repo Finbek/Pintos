@@ -41,7 +41,7 @@ process_execute (const char *file_name)
   /* Create a new thread to execute FILE_NAME. */
 
   token=strtok_r(file_name, "", &save_ptr);
-  tid = thread_create (token, PRI_DEFAULT, start_process, fn_copy);
+  tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
  
  if (tid == TID_ERROR){
    
@@ -65,6 +65,7 @@ start_process (void *file_name_)
   if_.eflags = FLAG_IF | FLAG_MBS;
 
 
+ printf("%s",file_name);
 //Parsing
 char* token, *save_ptr;
 int argc = 0;
@@ -78,7 +79,8 @@ char** argv = (char**) calloc(4,sizeof(char));
 argc-=1;
 
 
-
+ printf("\n", file_name);
+ printf("\n", argv[0]);
   success = load (argv[0], &if_.eip, &if_.esp);
 
   /* If load failed, quit. */
@@ -87,45 +89,45 @@ argc-=1;
     free(argv);
     thread_exit ();
 }
-//printf("\n HERRREEE\n");
-//Pushing elements to the stack
-void** addresses = (void**) calloc(argc, sizeof(void*));
-int i =0;
+	//printf("\n HERRREEE\n");
+	//Pushing elements to the stack
+	void** addresses = (void**) calloc(argc, sizeof(void*));
+	int i =0;
 
-for(i = argc; i>=0; i--)
-{
-	if_.esp -= strlen(argv[i])+1;
-	addresses[i] = if_.esp;
-        memcpy(if_.esp, argv[i], strlen(argv[i])+1);
-}
-//Adding padding and allignment
-for(i=0; i<(uintptr_t)if_.esp%4; i++){
-	if_.esp-=1;
-	memset(if_.esp,0,1);
-        }
-i=0;
-if_.esp-=4;
-//Pushhing pointers itself;
-for(i = argc; i>=0; i--)
-{
+	for(i = argc; i>=0; i--)
+	{
+		if_.esp -= strlen(argv[i])+1;
+		addresses[i] = if_.esp;
+        	memcpy(if_.esp, argv[i], strlen(argv[i])+1);
+	}
+	//Adding padding and allignment
+	for(i=0; i<(uintptr_t)if_.esp%4; i++){
+		if_.esp-=1;
+		memset(if_.esp,0,1);
+        	}
+	i=0;
 	if_.esp-=4;
-	memcpy(if_.esp, &addresses[i], 4);
-}
-//printf("12");
-//argv and argc address to stack
-void *argv_address=if_.esp;
-if_.esp-=4;
-memcpy(if_.esp, &argv_address,4);
-if_.esp-=4;
-++argc;
-//printf("%d\n", argc);
-memcpy(if_.esp, &argc, 4);
-//Fake address
-if_.esp-=4;
-memset(if_.esp,  0, 4);
-//printf("Finishing pushing arg \n");
-free(addresses);
-free(argv);
+	//Pushhing pointers itself;
+	for(i = argc; i>=0; i--)
+	{
+		if_.esp-=4;
+		memcpy(if_.esp, &addresses[i], 4);
+	}
+	//printf("12");
+	//argv and argc address to stack
+	void *argv_address=if_.esp;
+	if_.esp-=4;
+	memcpy(if_.esp, &argv_address,4);
+	if_.esp-=4;
+	++argc;
+	//printf("%d\n", argc);
+	memcpy(if_.esp, &argc, 4);
+	//Fake address
+	if_.esp-=4;
+	memset(if_.esp,  0, 4);
+	//printf("Finishing pushing arg \n");
+//free(addresses);
+//free(argv);
 //hex_dump(if_.esp, if_.esp, PHYS_BASE-if_.esp, true);  
  
  /* Start the user process by simulating a return from an
@@ -151,7 +153,7 @@ int
 process_wait (tid_t child_tid) 
 
 {
-  while(1);
+  while(true);
   struct thread* child=NULL;
   struct thread* parent;
   
