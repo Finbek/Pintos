@@ -121,7 +121,6 @@ syscall_handler (struct intr_frame *f)
                         exit(-1);
                 else
                 {
-			printf("HERE");
                 	int fd = *((int*)f->esp+5);
                 	void* buffer = (void*)(*((int*)f->esp+6));
                 	unsigned size = *((unsigned*)f->esp+7);
