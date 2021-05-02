@@ -226,9 +226,9 @@ void exit (int status)
         }
    	printf ("%s: exit(%d)\n", t->name, status);
         printf("\nWAKEUP\n");
-   	thread_exit();
-        printf("\nWAKEUP\n");
-	sema_up(&parent->parent_sleep);
+   	sema_up(&parent->parent_sleep);
+        printf("\nPARENT WOKEUP\n");
+	thread_exit();
         return;
      }
    }
