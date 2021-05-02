@@ -392,9 +392,9 @@ unsigned tell (int fd)
 	unsigned success = -1;
 	struct file_fd* a = find_file_fd(fd);
                 if(a!=NULL)
-		lock_acquire(&critical_section);
+{		lock_acquire(&critical_section);
                  success = file_tell(a->file);
-		lock_release(&critical_section);
+		lock_release(&critical_section);}
 	return success;
 }
 
