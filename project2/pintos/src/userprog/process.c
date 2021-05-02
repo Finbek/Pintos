@@ -42,7 +42,10 @@ process_execute (const char *file_name)
 
   token=strtok_r(file_name, " ", &save_ptr);
   if(token==NULL)
-	return -1;
+	{	
+		return -1;
+		palloc_free_page(fn_copy);
+	}
   tid = thread_create (token, PRI_DEFAULT, start_process, fn_copy);
   //Adding to child list to parent
  if (tid == TID_ERROR){
@@ -75,16 +78,28 @@ start_process (void *file_name_)
 //Parsing
 char* token, *save_ptr;
 int argc = 0;
-char** argv = (char**) calloc(4,sizeof(char));
 //Parsing by strtok_r
- for (token = strtok_r (file_name, " ", &save_ptr); token != NULL;
+char* fn_copy = palloc_get_page (0);
+  if (fn_copy == NULL)
+    return TID_ERROR;
+ strlcpy (fn_copy, file_name, PGSIZE);
+ token = strtok_r (file_name, " ", &save_ptr);
+  argc = 0;
+  /* calculate argc */
+  while (token != NULL) {
+    argc += 1;
+    token = strtok_r(NULL, " ", &save_ptr);
+  }
+int i;
+char** argv = (char**) calloc(argc,sizeof(char));
+for (token = strtok_r (fn_copy, " ", &save_ptr); i<argc;
          token = strtok_r (NULL, " ", &save_ptr))
                 {
-                                 argv[argc]=token;
-                                               argc++;                                                          } 
-argc-=1;
-
-
+                                   argv[i]=token;
+					i++; 
+                                                       }
+	
+				
   success = load (argv[0], &if_.eip, &if_.esp);
 
   /* If load failed, quit. */
@@ -93,11 +108,11 @@ argc-=1;
     free(argv);
     thread_exit ();
 }
+
 	//Pushing elements to the stack
 	void** addresses = (void**) calloc(argc, sizeof(void*));
-	int i =0;
-
-	for(i = argc; i>=0; i--)
+	i =0;
+	for(i = argc-1; i>=0; i--)
 	{
 		if_.esp -= strlen(argv[i])+1;
 		addresses[i] = if_.esp;
@@ -111,7 +126,7 @@ argc-=1;
 	i=0;
 	if_.esp-=4;
 	//Pushhing pointers itself;
-	for(i = argc; i>=0; i--)
+	for(i = argc-1; i>=0; i--)
 	{
 		if_.esp-=4;
 		memcpy(if_.esp, &addresses[i], 4);
@@ -121,7 +136,6 @@ argc-=1;
 	if_.esp-=4;
 	memcpy(if_.esp, &argv_address,4);
 	if_.esp-=4;
-	++argc;
 	memcpy(if_.esp, &argc, 4);
 	//Fake address
 	if_.esp-=4;
