@@ -221,6 +221,7 @@ void exit (int status)
             e = list_next(e);
 	  }
         }
+   	printf ("%s: exit(%d)\n", t->name, status);
    	sema_up(&parent->parent_sleep);
 	thread_exit();
         return;
