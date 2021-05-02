@@ -120,7 +120,8 @@ struct thread
     struct list children;
     bool is_child;
     struct semaphore parent_sleep; 
-    struct list status_list;  
+    struct list status_list; 
+    struct list_elem child_elem; 
 #endif
 
     /* Owned by thread.c. */

@@ -223,14 +223,14 @@ void exit (int status)
 	sema_up(&parent->parent_sleep);
      }
    }
-   printf ("Process %s exited with status(%d)\n", t->name, status);
+   printf ("%s: exit(%d)\n", t->name, status);
    thread_exit();
 }
 
 pid_t
 exec (const char *cmd_line)
-{
- /* struct thread *t = thread_current();
+{/*
+  struct thread *t = thread_current();
   
   pid_t pid = process_execute(cmd_line);
   if (pid == TID_ERROR)
@@ -238,7 +238,8 @@ exec (const char *cmd_line)
   t->have_children = true;
   struct thread *child_thread = find_child(pid);
   list_push_back(&t->children, &child_thread->info->elem);
-  return pid;*/
+  */
+  return TID_ERROR;
 }
 
 int wait (pid_t pid)
