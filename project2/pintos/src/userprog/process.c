@@ -11,7 +11,7 @@
 #include "filesys/directory.h"
 #include "filesys/file.h"
 #include "filesys/filesys.h"
-//#include "lib/stdio.h"
+#include "lib/stdio.h"
 #include "threads/flags.h"
 #include "threads/init.h"
 #include "threads/interrupt.h"
@@ -126,8 +126,8 @@ argc-=1;
 	if_.esp-=4;
 	memset(if_.esp,  0, 4);
 	//printf("Finishing pushing arg \n");
-//free(addresses);
-//free(argv);
+	free(addresses);
+	free(argv);
 //hex_dump(if_.esp, if_.esp, PHYS_BASE-if_.esp, true);  
  
  /* Start the user process by simulating a return from an
@@ -155,9 +155,11 @@ process_wait (tid_t child_tid)
 {
   //while(true);
   struct thread* child=NULL;
-  struct thread* parent;
+  struct thread* parent=thread_current();
   
   struct list_elem *e;
+  if(list_empty(&parent->children))
+	return -1;
   for(e = list_begin(&parent->children); e != list_end(&parent->children); e = list_next(e))
   {
 	child = list_entry(e, struct thread, elem);
@@ -207,9 +209,9 @@ process_exit (void)
       pagedir_activate (NULL);
       pagedir_destroy (pd);
     }
-	if(thread_current()->executable!=NULL)
-		file_allow_write(thread_current()->executable);
-	close_fds();
+//	if(thread_current()->executable!=NULL)
+//		file_allow_write(thread_current()->executable);
+//	close_fds();
 	
 }
 
