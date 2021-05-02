@@ -279,8 +279,8 @@ int open (const char *file)
 		struct file* open_file = filesys_open(file);
 		if(file==NULL)
 		{
-			return -1;
 			lock_release(&critical_section);
+			return -1;
 		}
 		struct file_fd* fd = (struct file_fd*) malloc(sizeof(struct file_fd));
 		fd ->fd_numb = fd_number;
@@ -289,7 +289,7 @@ int open (const char *file)
 		list_push_front(&thread_current()->list_fd, &fd->elem);
 		success =fd_number;		
 		
-  lock_acquire(&critical_section);
+	lock_release(&critical_section);
   return success;
 	
 }
@@ -345,6 +345,7 @@ int read (int fd, void *buffer, unsigned size)
 				i+=1;
 			}
 		
+		lock_release(&critical_section);
 		return i;
 		}
 		else{
@@ -361,12 +362,10 @@ int read (int fd, void *buffer, unsigned size)
 int write (int fd, const void *buffer, unsigned size)
 {	
 int success =0;
-	printf("\nWritting to the disk\n");
-        printf("\n%d\n", fd);
-        printf("\n%d\n", size);
 	lock_acquire(&critical_section);
 	if(fd==1){
 		putbuf(buffer, size);
+		lock_release(&critical_section);
 		return size;
 	}
 	struct file_fd* a = find_file_fd(fd);
@@ -402,7 +401,9 @@ void close (int fd)
 	struct file_fd* a = find_file_fd(fd);
 	if(a!=NULL)
 	{
+	lock_acquire(&critical_section);
 	file_close(a->file);
+	lock_release(&critical_section);
 	list_remove(&a->elem); 
 	} 
 }
