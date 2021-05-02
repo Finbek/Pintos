@@ -40,8 +40,10 @@ process_execute (const char *file_name)
   
   /* Create a new thread to execute FILE_NAME. */
 
-  token=strtok_r(file_name, "", &save_ptr);
-  tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
+  token=strtok_r(file_name, " ", &save_ptr);
+  if(token==NULL)
+	return -1;
+  tid = thread_create (token, PRI_DEFAULT, start_process, fn_copy);
   //Adding to child list to parent
  if (tid == TID_ERROR){
    
