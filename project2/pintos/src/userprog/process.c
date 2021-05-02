@@ -38,7 +38,6 @@ process_execute (const char *file_name)
     return TID_ERROR;
   strlcpy (fn_copy, file_name, PGSIZE);
   
-
   /* Create a new thread to execute FILE_NAME. */
 
   token=strtok_r(file_name, "", &save_ptr);
@@ -88,7 +87,7 @@ argc-=1;
     free(argv);
     thread_exit ();
 }
-
+//printf("\n HERRREEE\n");
 //Pushing elements to the stack
 void** addresses = (void**) calloc(argc, sizeof(void*));
 int i =0;
@@ -152,6 +151,7 @@ int
 process_wait (tid_t child_tid) 
 
 {
+  while(1);
   struct thread* child=NULL;
   struct thread* parent;
   
@@ -203,7 +203,8 @@ process_exit (void)
       pagedir_activate (NULL);
       pagedir_destroy (pd);
     }
-	file_allow_write(thread_current()->executable);
+	if(thread_current()->executable!=NULL)
+		file_allow_write(thread_current()->executable);
 	close_fds();
 	
 }

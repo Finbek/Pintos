@@ -31,7 +31,10 @@ syscall_handler (struct intr_frame *f)
   if(validation(f->esp))
   {
   	int code = *(int*)f->esp;
-	
+	printf("syscall num : %d\n", code);
+	printf ("system call!\n");
+
+
 	if(code==SYS_HALT)
 		halt();
 	if(code == SYS_EXIT)

@@ -112,7 +112,7 @@ struct thread
     uint32_t *pagedir;                  /* Page directory. */
     
     //Executable files
-    struct list executable_files;
+    struct file* executable;
     struct list list_fd;  
     /*parent-child*/
     bool is_waited;

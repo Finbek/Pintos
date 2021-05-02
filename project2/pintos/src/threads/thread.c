@@ -472,6 +472,7 @@ init_thread (struct thread *t, const char *name, int priority)
 #ifdef USERPROG
   t->is_waited = false;
   t->is_child = false;
+  t->executable;
   list_init(&t->children);
   list_init(&t->list_fd);
   list_init(&t->status_list);
