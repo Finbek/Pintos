@@ -28,7 +28,7 @@ static void
 syscall_handler (struct intr_frame *f) 
 {
   //printf ("system call!\n");
- /* if(validation(f->esp))
+  if(validation(f->esp))
   {
   	int code = *(int*)f->esp;
 	printf("syscall num : %d\n", code);
@@ -166,7 +166,7 @@ syscall_handler (struct intr_frame *f)
   {
   	//printf("not valid address\n");
   	exit(-1);
-  }*/ 
+  } 
 }
 
 bool validation(void* addr)
@@ -231,12 +231,15 @@ pid_t
 exec (const char *cmd_line)
 {
   struct thread *t = thread_current();
-
+  printf("exec 1:%s\n", cmd_line);
   pid_t pid = process_execute(cmd_line);
   sema_down(&t->parent_sleep);
   if (pid == TID_ERROR)
+  {
+     printf("pid is tid error\n");
      return -1;
-
+  }
+  printf("%s:succesfull execute\n", cmd_line);
   return pid;
 }
 

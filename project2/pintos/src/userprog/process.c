@@ -153,7 +153,7 @@ int
 process_wait (tid_t child_tid) 
 
 {
-  while(true);
+  //while(true);
   struct thread* child=NULL;
   struct thread* parent;
   
