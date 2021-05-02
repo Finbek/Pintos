@@ -207,6 +207,19 @@ void exit (int status)
 	status_child->status = status;
 	status_child->tid = t->tid;
 	list_push_front(&parent->status_list, &status_child->elem);
+	/*remove exiting thread from parent->children*/
+        struct list_elem *e;
+        struct thread *cur;
+        for(e = list_begin(&parent->children); e != list_end(&parent->children);
+                e = list_next(e))
+        {
+          cur = list_entry(e, struct thread, child_elem);
+          if (cur->tid == t->tid)
+          {
+            list_remove(e);
+            e = list_end(&parent->children);
+          }
+        }
 	sema_up(&parent->parent_sleep);
      }
    }

@@ -161,6 +161,8 @@ process_wait (tid_t child_tid)
 	child = list_entry(e, struct thread, elem);
 	if(child->tid == child_tid)
 	{
+	  /*Make sure for-loop is exited after this*/
+          e = list_end(&parent->children);
 	  if (child->is_waited)
 	    return -1;
 	  else 
