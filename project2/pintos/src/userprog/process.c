@@ -21,6 +21,15 @@
 
 static thread_func start_process NO_RETURN;
 static bool load (const char *cmdline, void (**eip) (void), void **esp);
+static struct thread* my_parent;
+
+void know_your_parent(void)
+	{
+		struct thread* child = thread_current();
+  		child->parent = my_parent->tid;
+  		child ->is_child = true;
+  		list_push_front(&my_parent->children, &child->child_elem);
+	}
 /* Starts a new thread running a user program loaded from
    FILENAME.  The new thread may be scheduled (and may even exit)
    before process_execute() returns.  Returns the new process's
@@ -39,7 +48,7 @@ process_execute (const char *file_name)
   strlcpy (fn_copy, file_name, PGSIZE);
   
   /* Create a new thread to execute FILE_NAME. */
-
+  my_parent = thread_current();
   token=strtok_r(file_name, " ", &save_ptr);
   tid = thread_create (token, PRI_DEFAULT, start_process, fn_copy);
   //Adding to child list to parent
@@ -48,11 +57,6 @@ process_execute (const char *file_name)
     palloc_free_page (fn_copy);
     return tid;
     }
-  struct thread* child = find_thread(tid);
-  struct thread* parent = thread_current();
-  child->parent = parent->tid;
-  child ->is_child = true;
-  list_push_front(&parent->children, &child->child_elem); 
   return tid;
 }
 
@@ -102,9 +106,9 @@ for (token = strtok_r (fn_copy, " ", &save_ptr); i<argc;
   if (!success) {
     free(argv);
     palloc_free_page(fn_copy);
-    exit(-1);
+    thread_exit();
 }
-
+	know_your_parent();
 	//Pushing elements to the stack
 	void** addresses = (void**) calloc(argc, sizeof(void*));
 	i =0;
@@ -162,6 +166,7 @@ int
 process_wait (tid_t child_tid) 
 
 {
+	
   struct thread* child=NULL;
   struct thread* parent=thread_current(); 
   struct list_elem *e;
