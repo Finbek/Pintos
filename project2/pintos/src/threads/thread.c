@@ -300,6 +300,7 @@ thread_exit (void)
   intr_disable ();
   list_remove (&thread_current()->allelem);
   thread_current ()->status = THREAD_DYING;
+  
   schedule ();
   NOT_REACHED ();
 }
@@ -471,8 +472,9 @@ init_thread (struct thread *t, const char *name, int priority)
   t->magic = THREAD_MAGIC;
 #ifdef USERPROG
   t->is_waited = false;
+  t->parent=NULL;
   t->is_child = false;
-  t->executable;
+  t->executable = NULL;
   list_init(&t->children);
   list_init(&t->list_fd);
   list_init(&t->status_list);
