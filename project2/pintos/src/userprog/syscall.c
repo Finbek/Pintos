@@ -197,6 +197,7 @@ void exit (int status)
    if(lock_held_by_current_thread(&critical_section))
 	lock_release(&critical_section);
    struct thread *t = thread_current();
+  
    if (t->is_child)
    {
      struct thread *parent = find_thread(t->parent);
@@ -208,20 +209,6 @@ void exit (int status)
 	list_push_front(&parent->status_list, &status_child->elem);
 	/*remove exiting thread from parent->children*/
         struct list_elem *e = list_begin(&parent->children);
-        struct thread *cur;
-        while (e != list_end(&parent->children))
-        {
-          cur = list_entry(e, struct thread, child_elem);
-          if (cur->tid == t->tid)
-          {
-            list_remove(e);
-            e = list_end(&parent->children);
-          }
-	  else 
-          {
-            e = list_next(e);
-	  }
-        }
    	printf ("%s: exit(%d)\n", t->name, status);
    	sema_up(&parent->parent_sleep);
 	thread_exit();

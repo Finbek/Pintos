@@ -180,9 +180,10 @@ process_wait (tid_t child_tid)
           e = list_end(&parent->children);
 	  if (child->is_waited)
 	    return -1;
-	  else 
+	  else{
 	    child->is_waited = true;
-	}
+	    list_remove(&child->child_elem);  	
+	}}
   }
   if(child==NULL)
 	return -1;
