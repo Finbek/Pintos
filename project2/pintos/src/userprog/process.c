@@ -41,22 +41,20 @@ process_execute (const char *file_name)
   /* Create a new thread to execute FILE_NAME. */
 
   token=strtok_r(file_name, " ", &save_ptr);
-  if(token==NULL)
-	{	
-		return -1;
-		palloc_free_page(fn_copy);
-	}
   tid = thread_create (token, PRI_DEFAULT, start_process, fn_copy);
   //Adding to child list to parent
  if (tid == TID_ERROR){
    
     palloc_free_page (fn_copy);
+    return tid;
     }
+  enum intr_level old_level = intr_disable ();
   struct thread* child = find_thread(tid);
   struct thread* parent = thread_current();
   child->parent = parent->tid;
   child ->is_child = true;
   list_push_front(&parent->children, &child->child_elem); 
+  intr_set_level (old_level);
   return tid;
 }
 
@@ -101,12 +99,12 @@ for (token = strtok_r (fn_copy, " ", &save_ptr); i<argc;
 	
 				
   success = load (argv[0], &if_.eip, &if_.esp);
-
   /* If load failed, quit. */
   //palloc_free_page (file_name);
   if (!success) {
     free(argv);
-    thread_exit ();
+    palloc_free_page(fn_copy);
+    exit(-1);
 }
 
 	//Pushing elements to the stack
@@ -331,7 +329,6 @@ load (const char *file_name, void (**eip) (void), void **esp)
   if (t->pagedir == NULL) 
     goto done;
   process_activate ();
-
   /* Open executable file. */
   file = filesys_open (file_name);
   if (file == NULL) 
@@ -558,7 +555,6 @@ setup_stack (void **esp)
         palloc_free_page (kpage);
     }
   
-//hex_dump(*esp, *esp, PHYS_BASE-*esp, true);  
   return success;
 }
 

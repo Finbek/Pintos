@@ -207,8 +207,6 @@ void exit (int status)
 	status_child->status = status;
 	status_child->tid = t->tid;
 	list_push_front(&parent->status_list, &status_child->elem);
-	/*remove exiting thread from parent->children*/
-        struct list_elem *e = list_begin(&parent->children);
    	printf ("%s: exit(%d)\n", t->name, status);
    	sema_up(&parent->parent_sleep);
 	thread_exit();
@@ -222,8 +220,6 @@ void exit (int status)
 pid_t
 exec (const char *cmd_line)
 {
-  struct thread *t = thread_current();
-  printf("exec 1:%s\n", cmd_line);
   if (!lock_held_by_current_thread(&critical_section))
       while(!lock_try_acquire(&critical_section))
               thread_yield();
@@ -233,10 +229,8 @@ exec (const char *cmd_line)
   //sema_down(&t->parent_sleep);
   if (pid == TID_ERROR)
   {
-     printf("pid is tid error\n");
      return -1;
   }
-  printf("%s:succesfull execute\n", cmd_line);
   return pid;
 }
 
