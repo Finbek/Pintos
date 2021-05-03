@@ -48,13 +48,11 @@ process_execute (const char *file_name)
     palloc_free_page (fn_copy);
     return tid;
     }
-  enum intr_level old_level = intr_disable ();
   struct thread* child = find_thread(tid);
   struct thread* parent = thread_current();
   child->parent = parent->tid;
   child ->is_child = true;
   list_push_front(&parent->children, &child->child_elem); 
-  intr_set_level (old_level);
   return tid;
 }
 
