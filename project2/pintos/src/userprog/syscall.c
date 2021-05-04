@@ -207,7 +207,10 @@ void exit (int status)
 	status_child->status = status;
 	status_child->tid = t->tid;
 	list_push_front(&parent->status_list, &status_child->elem);
-	sema_up(&parent->parent_sleep);
+   	printf ("%s: exit(%d)\n", t->name, status);
+   	sema_up(&parent->parent_sleep);
+	thread_exit();
+        return;
      }
    }
    printf ("%s: exit(%d)\n", t->name, status);
@@ -265,21 +268,21 @@ int open (const char *file)
   int success = -1;
   static int fd_number = 2;
 		if (!lock_held_by_current_thread(&critical_section))
-		{	while(!lock_try_acquire(&critical_section))
-        	        	thread_yield();}
+			while(!lock_try_acquire(&critical_section))
+        	        	thread_yield();
 		struct file* open_file = filesys_open(file);
 		if(file==NULL)
 		{
 			if (lock_held_by_current_thread(&critical_section))
 				lock_release(&critical_section);
-			return success;
+			return -1;
 		}
 		struct file_fd* fd = (struct file_fd*) malloc(sizeof(struct file_fd));
 		fd ->fd_numb = fd_number;
 		fd->file = open_file;
+		fd_number+=1;
 		list_push_front(&thread_current()->list_fd, &fd->elem);
 		success =fd_number;		
-		fd_number+=1;
 		
 	if (lock_held_by_current_thread(&critical_section))
 		lock_release(&critical_section);
@@ -336,8 +339,7 @@ int read (int fd, void *buffer, unsigned size)
 		while(!lock_try_acquire(&critical_section))
 			thread_yield();
  	if(fd ==0)
-		{
-			int i =0;
+		{	int i =0;
 			while(i<size)
 			{
 				*((char *)buffer++) = input_getc();
