@@ -271,10 +271,11 @@ int open (const char *file)
 			while(!lock_try_acquire(&critical_section))
         	        	thread_yield();
 		struct file* open_file = filesys_open(file);
-		if(file==NULL)
+		if (lock_held_by_current_thread(&critical_section))
+                                lock_release(&critical_section);
+		//printf("######\n");
+		if(open_file==NULL)
 		{
-			if (lock_held_by_current_thread(&critical_section))
-				lock_release(&critical_section);
 			return -1;
 		}
 		struct file_fd* fd = (struct file_fd*) malloc(sizeof(struct file_fd));
