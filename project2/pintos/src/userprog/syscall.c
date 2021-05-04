@@ -262,7 +262,13 @@ bool create (const char *file, unsigned initial_size)
 	if (!lock_held_by_current_thread(&critical_section))
 		while(!lock_try_acquire(&critical_section))
         	        thread_yield();
-	success = filesys_create(file, initial_size);
+	if (file == NULL)
+	{
+		return success;
+	} else 
+	{
+		success = filesys_create(file, initial_size);
+	}
 	if (lock_held_by_current_thread(&critical_section))
 		lock_release(&critical_section);
   return success;	
@@ -284,6 +290,8 @@ int open (const char *file)
 {
   
   int success = -1;
+  if (file == NULL)
+     return success;
   static int fd_number = 2;
 		if (!lock_held_by_current_thread(&critical_section))
 			while(!lock_try_acquire(&critical_section))
@@ -348,7 +356,8 @@ int filesize (int fd)
 
 int read (int fd, void *buffer, unsigned size)
 {
-  
+  if (!validation(buffer, 1))
+	return -1;	 
   int success = -1;
 	if (!lock_held_by_current_thread(&critical_section))
 		while(!lock_try_acquire(&critical_section))
