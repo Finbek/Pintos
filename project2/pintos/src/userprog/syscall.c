@@ -264,7 +264,7 @@ bool create (const char *file, unsigned initial_size)
         	        thread_yield();
 	if (file == NULL)
 	{
-		return success;
+		exit(-1);
 	} else 
 	{
 		success = filesys_create(file, initial_size);
@@ -356,8 +356,6 @@ int filesize (int fd)
 
 int read (int fd, void *buffer, unsigned size)
 {
-  if (!validation(buffer, 1))
-	return -1;	 
   int success = -1;
 	if (!lock_held_by_current_thread(&critical_section))
 		while(!lock_try_acquire(&critical_section))
