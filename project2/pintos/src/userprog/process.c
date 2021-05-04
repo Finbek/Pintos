@@ -19,6 +19,7 @@
 #include "threads/thread.h"
 #include "threads/vaddr.h"
 
+static struct thread *my_parent;
 static thread_func start_process NO_RETURN;
 static bool load (const char *cmdline, void (**eip) (void), void **esp);
 /* Starts a new thread running a user program loaded from
@@ -166,8 +167,6 @@ process_wait (tid_t child_tid)
   struct thread* child=NULL;
   struct thread* parent=thread_current(); 
   struct list_elem *e;
-  if(list_empty(&parent->children))	
-	return -1;
   for(e = list_begin(&parent->children); e != list_end(&parent->children); e = list_next(e))
   {
 	child = list_entry(e, struct thread, elem);
@@ -179,7 +178,6 @@ process_wait (tid_t child_tid)
 	    return -1;
 	  else{
 	    child->is_waited = true;
-	    list_remove(&child->child_elem);  	
 	}}
   }
   if(child==NULL)

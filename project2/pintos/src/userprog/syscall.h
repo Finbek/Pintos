@@ -34,5 +34,6 @@ unsigned tell (int fd);
 void close (int fd);
 
 
+bool validation(void* add, int counter);
 
 #endif /* userprog/syscall.h */
