@@ -209,7 +209,11 @@ void exit (int status)
    if(lock_held_by_current_thread(&critical_section))
 	lock_release(&critical_section);
    struct thread *t = thread_current();
-  
+   if(t->executable!=NULL)
+	{
+		file_allow_write(t->executable);
+		close(t->executable);
+	}
    if (t->is_child)
    {
      struct thread *parent = find_thread(t->parent);
