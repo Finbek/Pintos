@@ -87,12 +87,13 @@ char* fn_copy = palloc_get_page (0);
     token = strtok_r(NULL, " ", &save_ptr);
   }
 int i;
-char** argv = (char**) calloc(argc,sizeof(char));
+char** argv = (char**) calloc(argc,sizeof(char*));
 for (token = strtok_r (fn_copy, " ", &save_ptr); i<argc;
          token = strtok_r (NULL, " ", &save_ptr))
                 {
                                    argv[i]=token;
-					i++; 
+					i++;
+				   
                                                        }
 	
 				
