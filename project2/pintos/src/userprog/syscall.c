@@ -11,6 +11,7 @@
 #include "threads/malloc.h"
 #include <list.h>
 #include "threads/synch.h"
+#include "lib/kernel/list.h"
 static void syscall_handler (struct intr_frame *);
 
 struct lock critical_section;
@@ -278,12 +279,13 @@ int open (const char *file)
 		{
 			return -1;
 		}
-		struct file_fd* fd = (struct file_fd*) malloc(sizeof(struct file_fd));
+		struct file_fd* fd =  malloc(sizeof(struct file_fd));
 		fd ->fd_numb = fd_number;
 		fd->file = open_file;
 		fd_number+=1;
-		list_push_front(&thread_current()->list_fd, &fd->elem);
-		success =fd_number;		
+		struct list* add_here = &thread_current()->list_fd;
+		list_push_front(add_here, &fd->elem);
+		success =fd->fd_numb;
 		
 	if (lock_held_by_current_thread(&critical_section))
 		lock_release(&critical_section);
@@ -293,13 +295,13 @@ int open (const char *file)
 
 struct file_fd* find_file_fd(int fd_number)
 	{	 
-		if(list_empty(&thread_current()->list_fd));
-			return NULL;
+	//	if(list_empty(&thread_current()->list_fd)==true);
+	//		return NULL;
 		struct list_elem* first = list_begin(&thread_current()->list_fd);
 	 	 struct list_elem* last = list_end(&thread_current()->list_fd);
 		struct file_fd* a; 
 		while (first!=last)
-		 {	a = list_entry(first, struct file_fd, elem);
+		{	a = list_entry(first, struct file_fd, elem);
 			if(a->fd_numb ==fd_number)
 			{
 				return a;
@@ -307,11 +309,6 @@ struct file_fd* find_file_fd(int fd_number)
 			first = list_next(first);
 	 
 		}
-		a = list_entry(first, struct file_fd, elem);
-                        if(a->fd_numb ==fd_number)
-                        {
-                                return a;
-                         }
 		return NULL;
 
 }
