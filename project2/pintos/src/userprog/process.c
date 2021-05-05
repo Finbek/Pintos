@@ -57,7 +57,7 @@ process_execute (const char *file_name)
   struct thread* parent = thread_current();
   child->parent = parent->tid;
   child ->is_child = true;
-  list_push_front(&parent->children, &child->child_elem); 
+  list_push_back(&parent->children, &child->child_elem); 
   return tid;
 }
 
@@ -177,30 +177,28 @@ process_wait (tid_t child_tid)
   struct thread* child=NULL;
   struct thread* parent=thread_current(); 
   struct list_elem *e;
+		 struct child* ch;
+  for(e = list_begin(&parent->status_list); e != list_end(&parent->status_list); e = list_next(e))
+        {
+            ch = list_entry(e, struct child, elem);
+        if(ch->tid ==child_tid)
+		{	list_remove(&ch->elem);
+                	return ch->status;
+		}
+        }
   for(e = list_begin(&parent->children); e != list_end(&parent->children); e = list_next(e))
   {
 	child = list_entry(e, struct thread, elem);
 	if(child->tid == child_tid)
 	{
 	  /*Make sure for-loop is exited after this*/
-          e = list_end(&parent->children);
-	  if (child->is_waited)
-	    return -1;
-	  else{
-	    child->is_waited = true;
-	}}
+		break;
+	}
   }
   if(child==NULL)
 	return -1;
   sema_down(&parent->parent_sleep);
-  struct child* ch;
-  for(e = list_begin(&parent->status_list); e != list_end(&parent->status_list); e = list_next(e))
-	{
-	    ch = list_entry(e, struct child, elem);
-	if(ch->tid ==child_tid)
-		return ch->status;
-	}
-	return -1;
+  process_wait(child_tid);
 }
 
 /* Free the current process's resources. */
