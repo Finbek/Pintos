@@ -46,10 +46,12 @@ process_execute (const char *file_name)
   fn=strtok_r(fn, " ", &save_ptr);
   tid = thread_create (fn, PRI_DEFAULT, start_process, fn_copy);
   //Adding to child list to parent
- if (tid == TID_ERROR){
-   
+  my_parent = thread_current();
+  sema_down(&my_parent->parent_sleep);
+ if (tid == TID_ERROR || !(find_thread(tid)->is_loaded)){
+    //printf("%d###", tid);
     palloc_free_page (fn_copy);
-    return tid;
+    return TID_ERROR;
     }
   struct thread* child = find_thread(tid);
   struct thread* parent = thread_current();
@@ -103,12 +105,18 @@ for (token = strtok_r (fn_copy, " ", &save_ptr); i<argc;
   success = load (argv[0], &if_.eip, &if_.esp);
   /* If load failed, quit. */
   //palloc_free_page (file_name);
+  thread_current()->is_loaded = success;
   if (!success) {
     free(argv);
     palloc_free_page(fn_copy);
-    exit(-1);
+    sema_up(&my_parent->parent_sleep);
+    thread_yield();
+    //exit(-1);
+    return;
 }
 
+   sema_up(&my_parent->parent_sleep);
+        thread_yield();
 	//Pushing elements to the stack
 	void** addresses = (void**) calloc(argc, sizeof(void*));
 	i =0;
