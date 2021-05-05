@@ -23,12 +23,12 @@ syscall_init (void)
 }
 struct file_fd* find_file_fd(int fd_number);
 
-bool validation(void * addr,int counter);
+bool validation(void * addr);
 
 static void
 syscall_handler (struct intr_frame *f) 
 {
-  if(validation(f->esp,1))
+  if(validation((int*)f->esp))
   {
   	int code = *(int*)f->esp;
 
@@ -37,7 +37,7 @@ syscall_handler (struct intr_frame *f)
 		halt();
 	if(code == SYS_EXIT)
 	{	
-		if(!validation(f->esp+1,1))
+		if(!validation(((int*)f->esp+1)))
 			exit(-1);
 		else
 		{
@@ -47,7 +47,7 @@ syscall_handler (struct intr_frame *f)
 	}
 	if(code ==SYS_EXEC)
 	{
-		if(!validation(f->esp+1,1))
+		if(!validation(((int*)f->esp+1)))
                         exit(-1);
                 else
                 {
@@ -57,7 +57,7 @@ syscall_handler (struct intr_frame *f)
 	} 
 	if(code == SYS_WAIT)
 	{
-		if(!validation(f->esp+1,1))
+		if(!validation(((int*)f->esp+1)))
                         exit(-1);
                 else
                 {
@@ -66,98 +66,71 @@ syscall_handler (struct intr_frame *f)
 		}
 	}
 	if(code == SYS_CREATE){
-		if(!validation(f->esp+4, f->esp+5) || !validation(f->esp+5,1))
-                        exit(-1);
-                else
-                {
+                
 		const char* file = (char*)(*((int*)f->esp+4));
 		unsigned initial_size =*((unsigned*)f->esp+5);
-		f->eax = create(file, initial_size);
-		}
+		if (validation(file))
+			f->eax = create(file, initial_size);
+		else
+			exit(-1);
 	}
 	if(code == SYS_REMOVE)
 	{
-		if(!validation(f->esp+1,1))
-                        exit(-1);
-                else
-                {
 		const char* file = (char*)(*((int*)f->esp+1));
-		f->eax = remove(file);
-		}
+		if(validation(file))
+			f->eax = remove(file);
+		else
+			exit(-1);
 	}
 	if(code == SYS_OPEN)
-	{	if(!validation(f->esp+1,1))
-                        exit(-1);
-                else
-                {
+	{
 		const char* file = (char*)(*((int*)f->esp+1));
-		f->eax = open(file);
-		}
+		if(validation(file))
+			f->eax = open(file);
+		else
+			exit(-1);
 	}
 	if(code == SYS_FILESIZE)
 	{	
-		if(!validation(f->esp+1,1))
-                        exit(-1);
-                else
-                {
 		int fd = *((int*)f->esp+1);
 		f->eax = filesize(fd);
-		}
 	}
 	if(code == SYS_READ)
-	{	if(!validation(f->esp+5,1)||!validation(f->esp+6,f->esp+7)||!validation(f->esp+7,1))
-                        exit(-1);
-                else
-                {
+	{
 		
 		int fd = *((int*)f->esp+5);
 		void* buffer = (void*)(*((int*)f->esp+6));
 		unsigned size = *((unsigned*)f->esp+7);
-		f->eax = read(fd, buffer, size);
-		}
+		if (validation(buffer) && validation(buffer+size-1))
+			f->eax = read(fd, buffer, size);
+		else
+			exit(-1);
 	}
 	if(code == SYS_WRITE)
 	{
-		 if(!validation(f->esp+5,f->esp+6)||!validation(f->esp+6,1)||!validation(f->esp+7,1))
-                        exit(-1);
-                else
-                {
                 	int fd = *((int*)f->esp+5);
                 	void* buffer = (void*)(*((int*)f->esp+6));
                 	unsigned size = *((unsigned*)f->esp+7);
-			f->eax = write(fd, buffer, size);
-		}
+			if (validation(buffer) && validation(buffer+size-1))
+				f->eax = write(fd, buffer, size);
+			else
+				exit(-1);
 	}		
 	if(code == SYS_SEEK)
 	{
-		if(!validation(f->esp+4,1) || !validation(f->esp+5,1))
-                        exit(-1);
-                else
-		{
 		int fd = *((int*)f->esp+4);
 		unsigned position = *((unsigned*)f->esp+5);
 		seek(fd, position);
-		}
 	}
 	if(code == SYS_TELL)
 	{	
-		if(!validation(f->esp+1,1))
-                        exit(-1);
-                else
-                {
 		int fd = *((int*)f->esp+1);
 		f->eax = tell(fd);
-		}
 	}
 	if(code == SYS_CLOSE)
  	{
-		if(!validation(f->esp+1,1))
-                        exit(-1);
-                else
-                {
 		int fd = *((int*)f->esp+1);
 		close(fd);	
-		}
 	}	
   }
   else
@@ -167,20 +140,10 @@ syscall_handler (struct intr_frame *f)
   } 
 }
 
-bool validation(void* add, int counter)
+bool validation(void* addr)
 
 {
-        char* addr = (char*)add;
-	if (counter==1)
 		return (addr!=NULL && is_user_vaddr(addr)&& (pagedir_get_page(thread_current()->pagedir,addr)!=NULL));
-	int i = 0;
-	while(i<counter)
-		{ if(addr[i]!=NULL && is_user_vaddr(addr[i])&& (pagedir_get_page(thread_current()->pagedir,addr[i])!=NULL))
-			i++;
-		  else
-			return false;
-		}
-	return true;
 }
 
 
