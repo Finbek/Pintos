@@ -155,17 +155,36 @@ halt (void)
 
 void close_fds()
 	{
-		if(list_empty(&thread_current()->list_fd));
-                        return;
                 struct list_elem* first = list_begin(&thread_current()->list_fd);
                 struct list_elem* last = list_end(&thread_current()->list_fd);
                 struct file_fd* a;
                 while (first!=last)
                  {      a = list_entry(first, struct file_fd, elem);
                         first=list_next(first);
-			close(a);
+			close(a->fd_numb);
                 }
 	}
+
+void remove_status_keeper()
+	{
+   		struct thread *t = thread_current();
+		if(list_size(&t->status_list)!=0)
+	        {
+                 struct list_elem *e;
+                 struct child* ch;
+                  for(e = list_begin(&t->status_list); e != list_end(&t->status_list); e = list_next(e))
+                 {
+                        ch = list_entry(e, struct child, elem);
+                        list_remove(&ch->elem);
+                        free(ch);
+                }
+
+        	}
+
+	}
+
+
+
 void exit (int status)
 {
    close_fds();
@@ -177,6 +196,7 @@ void exit (int status)
 		file_allow_write(t->executable);
 		close(t->executable);
 	}
+	remove_status_keeper();
    if (t->is_child)
    {
      struct thread *parent = find_thread(t->parent);
@@ -406,6 +426,7 @@ void close (int fd)
 	file_close(a->file);
 	if (lock_held_by_current_thread(&critical_section))
 		lock_release(&critical_section);
-	list_remove(&a->elem); 
+	list_remove(&a->elem);
+	free(a);
 	} 
 }

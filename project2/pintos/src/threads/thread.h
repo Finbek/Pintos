@@ -116,7 +116,6 @@ struct thread
     struct list list_fd;  
     /*parent-child*/
     bool is_loaded;
-    bool is_waited;
     tid_t parent;
     struct list children;
     bool is_child;

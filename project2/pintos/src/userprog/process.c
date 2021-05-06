@@ -29,22 +29,21 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
 tid_t
 process_execute (const char *file_name) 
 {
-  char *fn_copy, *save_ptr;
+  char *fn_copy,*token,  *save_ptr;
   tid_t tid;
+  token = malloc(strlen(file_name)+1);
+  strlcpy (token, file_name, strlen(file_name)+1);
+  token=strtok_r(token, " ", &save_ptr);
   /* Make a copy of FILE_NAME.
      Otherwise there's a race between the caller and load(). */
   fn_copy = palloc_get_page (0);
   if (fn_copy == NULL)
     return TID_ERROR;
   strlcpy (fn_copy, file_name, PGSIZE);
-  char* fn = palloc_get_page (0);
-  if (fn == NULL)
-    return TID_ERROR;
-  strlcpy (fn, file_name, PGSIZE); 
   /* Create a new thread to execute FILE_NAME. */
 
-  fn=strtok_r(fn, " ", &save_ptr);
-  tid = thread_create (fn, PRI_DEFAULT, start_process, fn_copy);
+  tid = thread_create (token, PRI_DEFAULT, start_process, fn_copy);
+  free(token);
   //Adding to child list to parent
   my_parent = thread_current();
   sema_down(&my_parent->parent_sleep);
@@ -82,7 +81,10 @@ int argc = 0;
 //Parsing by strtok_r
 char* fn_copy = palloc_get_page (0);
   if (fn_copy == NULL)
-    return TID_ERROR;
+    	{	
+    		palloc_free_page (file_name);
+		return TID_ERROR;
+	}
  strlcpy (fn_copy, file_name, PGSIZE);
  token = strtok_r (file_name, " ", &save_ptr);
   argc = 0;
@@ -104,7 +106,6 @@ for (token = strtok_r (fn_copy, " ", &save_ptr); i<argc;
 				
   success = load (argv[0], &if_.eip, &if_.esp);
   /* If load failed, quit. */
-  //palloc_free_page (file_name);
   thread_current()->is_loaded = success;
   if (!success) {
     free(argv);
@@ -117,6 +118,7 @@ for (token = strtok_r (fn_copy, " ", &save_ptr); i<argc;
 
    sema_up(&my_parent->parent_sleep);
         thread_yield();
+    palloc_free_page (file_name);
 	//Pushing elements to the stack
 	void** addresses = (void**) calloc(argc, sizeof(void*));
 	i =0;
@@ -150,6 +152,7 @@ for (token = strtok_r (fn_copy, " ", &save_ptr); i<argc;
 	memset(if_.esp,  0, 4);
 	free(addresses);
 	free(argv);
+	palloc_free_page(fn_copy);
   //hex_dump(if_.esp, if_.esp, PHYS_BASE-if_.esp, true);  
  /* Start the user process by simulating a return from an
      interrupt, implemented by intr_exit (in
@@ -183,7 +186,9 @@ process_wait (tid_t child_tid)
             ch = list_entry(e, struct child, elem);
         if(ch->tid ==child_tid)
 		{	list_remove(&ch->elem);
-                	return ch->status;
+			int st = ch->status;
+			free(ch);
+                	return st;
 		}
         }
   for(e = list_begin(&parent->children); e != list_end(&parent->children); e = list_next(e))

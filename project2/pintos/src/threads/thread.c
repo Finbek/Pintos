@@ -472,7 +472,6 @@ init_thread (struct thread *t, const char *name, int priority)
   t->magic = THREAD_MAGIC;
 #ifdef USERPROG
   t->is_loaded = false;
-  t->is_waited = false;
   t->parent=NULL;
   t->is_child = false;
   t->executable = NULL;
