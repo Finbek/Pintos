@@ -135,7 +135,6 @@ syscall_handler (struct intr_frame *f)
   }
   else
   {
-  	//printf("not valid address\n");
   	exit(-1);
   } 
 }
@@ -143,7 +142,7 @@ syscall_handler (struct intr_frame *f)
 bool validation(void* addr)
 
 {
-		return (addr!=NULL && is_user_vaddr(addr)&& (pagedir_get_page(thread_current()->pagedir,addr)!=NULL));
+	return (addr!=NULL && is_user_vaddr(addr)&& (pagedir_get_page(thread_current()->pagedir,addr)!=NULL));
 }
 
 
@@ -166,22 +165,20 @@ void close_fds()
 	}
 
 void remove_status_keeper()
-	{
-   		struct thread *t = thread_current();
-		if(list_size(&t->status_list)!=0)
-	        {
-                 struct list_elem *e;
-                 struct child* ch;
-                  for(e = list_begin(&t->status_list); e != list_end(&t->status_list); e = list_next(e))
-                 {
-                        ch = list_entry(e, struct child, elem);
-                        list_remove(&ch->elem);
-                        free(ch);
-                }
-
-        	}
-
-	}
+{
+	struct thread *t = thread_current();
+	if(list_size(&t->status_list)!=0)
+        {
+             struct list_elem *e;
+             struct child* ch;
+             for(e = list_begin(&t->status_list); e != list_end(&t->status_list); e = list_next(e))
+             {
+                  ch = list_entry(e, struct child, elem);
+                  list_remove(&ch->elem);
+                  free(ch);
+             }
+       	}
+}
 
 
 
@@ -226,7 +223,7 @@ exec (const char *cmd_line)
   pid_t pid = process_execute(cmd_line);
   if (lock_held_by_current_thread(&critical_section))
       lock_release(&critical_section);
-  //sema_down(&t->parent_sleep);
+  
   if (pid == TID_ERROR)
   {
      return -1;
@@ -282,7 +279,6 @@ int open (const char *file)
 		struct file* open_file = filesys_open(file);
 		if (lock_held_by_current_thread(&critical_section))
                                 lock_release(&critical_section);
-		//printf("######\n");
 		if(open_file==NULL)
 		{
 			return -1;
@@ -303,8 +299,6 @@ int open (const char *file)
 
 struct file_fd* find_file_fd(int fd_number)
 	{	 
-	//	if(list_empty(&thread_current()->list_fd)==true);
-	//		return NULL;
 		struct list_elem* first = list_begin(&thread_current()->list_fd);
 	 	 struct list_elem* last = list_end(&thread_current()->list_fd);
 		struct file_fd* a; 

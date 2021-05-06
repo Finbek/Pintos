@@ -48,7 +48,6 @@ process_execute (const char *file_name)
   my_parent = thread_current();
   sema_down(&my_parent->parent_sleep);
  if (tid == TID_ERROR || !(find_thread(tid)->is_loaded)){
-    //printf("%d###", tid);
     palloc_free_page (fn_copy);
     return TID_ERROR;
     }
@@ -83,7 +82,7 @@ char* fn_copy = palloc_get_page (0);
   if (fn_copy == NULL)
     	{	
     		palloc_free_page (file_name);
-		return TID_ERROR;
+		return;
 	}
  strlcpy (fn_copy, file_name, PGSIZE);
  token = strtok_r (file_name, " ", &save_ptr);
@@ -112,7 +111,6 @@ for (token = strtok_r (fn_copy, " ", &save_ptr); i<argc;
     palloc_free_page(fn_copy);
     sema_up(&my_parent->parent_sleep);
     thread_yield();
-    //exit(-1);
     return;
 }
 
@@ -196,14 +194,13 @@ process_wait (tid_t child_tid)
 	child = list_entry(e, struct thread, elem);
 	if(child->tid == child_tid)
 	{
-	  /*Make sure for-loop is exited after this*/
 		break;
 	}
   }
   if(child==NULL)
 	return -1;
   sema_down(&parent->parent_sleep);
-  process_wait(child_tid);
+  return process_wait(child_tid);
 }
 
 /* Free the current process's resources. */
