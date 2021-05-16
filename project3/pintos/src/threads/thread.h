@@ -95,11 +95,13 @@ struct child
   int status;
 };
 
-struct sup_page_table_element {
+struct sup_page_table_elem {
    uint32_t* vaddr;
    int time;
    bool dirty;
    bool accessed;
+};
+
 struct thread
   {
     /* Owned by thread.c. */
