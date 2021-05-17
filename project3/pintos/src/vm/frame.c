@@ -24,18 +24,24 @@ void *falloc(enum palloc_flags flags)
 		
 		struct frame_table_elem * fte = malloc(sizeof(struct frame_table_elem));
 		fte->frame = frame;
-		fte->holder = thread_current();
 		list_insert_ordered(&frame_table, &fte->elem, list_less, NULL);
 		return frame;
 	}
+
 
 bool list_less (const struct list_elem *a,
                              const struct list_elem *b,
                              void *aux UNUSED)
 {
 	//Change it according the eviction policy time - based
-	return list_entry(a, struct thread, elem)->priority<list_entry(b, struct thread, elem)->priority;
+	printf("A elem: %s\n",list_entry(a, struct frame_table_elem, elem)->page->time);
+	printf("B elem: %s\n",list_entry(b, struct frame_table_elem, elem)->page->time);
+	printf("A is less than B");
+	printf(list_entry(a, struct frame_table_elem, elem)->page->time<list_entry(b, struct frame_table_elem, elem)->page->time);
+	return list_entry(a, struct frame_table_elem, elem)->page->time<list_entry(b, struct frame_table_elem, elem)->page->time;
 }
+
+
 
 void f_free(void* frame)
 {

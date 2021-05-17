@@ -10,7 +10,7 @@ struct list frame_table;
  
 struct frame_table_elem {
 	uint32_t * frame;
-	struct thread* holder;
+	struct sup_page_table_elem* page;
 	struct list_elem elem;
 	//add other members
 };
