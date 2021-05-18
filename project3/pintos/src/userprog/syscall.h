@@ -2,7 +2,7 @@
 #define USERPROG_SYSCALL_H
 
 #include <stdio.h>
-
+#include "threads/thread.h"
 typedef int pid_t;
 typedef int mapid_t;
 void syscall_init (void);
@@ -14,7 +14,7 @@ void exit (int status);
 
 pid_t exec (const char *cmd_line);
 
-int wait (pid_t pid);
+int wait_sys (pid_t pid);
 
 bool create (const char *file, unsigned initial_size);
 
@@ -34,6 +34,13 @@ unsigned tell (int fd);
 
 void close (int fd);
 
+void unmap(struct mmap* mmap);
+
+void munmap_all();
+
+void munmap(mapid_t mapping);
+
+mapid_t mmap(int fd, void* addr);
 
 bool validation(void* addr);
 

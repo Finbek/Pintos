@@ -12,6 +12,9 @@
 #include <list.h>
 #include "threads/synch.h"
 #include "lib/kernel/list.h"
+#include "vm/page.h"
+#include "vm/frame.h"
+
 static void syscall_handler (struct intr_frame *);
 
 struct lock critical_section;
@@ -62,7 +65,7 @@ syscall_handler (struct intr_frame *f)
                 else
                 {
 		pid_t pid =(pid_t*) (*((int*)f->esp+1));
-		f->eax = wait(pid);
+		f->eax = wait_sys(pid);
 		}
 	}
 	if(code == SYS_CREATE){
@@ -137,9 +140,9 @@ syscall_handler (struct intr_frame *f)
 		int fd = *((int*)f->esp+4);
 		void* addr = (void*)(*((int*)f->esp+5));
 		if (validation(addr))
-			f->eax = mmap(int fd, void* addr)
+			f->eax = mmap(fd, addr);
 		else
-			exit(-1)
+			exit(-1);
 	}
 	if (code ==SYS_MUNMAP)	
 	{
@@ -199,6 +202,7 @@ void remove_status_keeper()
 void exit (int status)
 {
    close_fds();
+   munmap_all();
    if(lock_held_by_current_thread(&critical_section))
 	lock_release(&critical_section);
    struct thread *t = thread_current();
@@ -245,7 +249,7 @@ exec (const char *cmd_line)
   return pid;
 }
 
-int wait (pid_t pid)
+int wait_sys (pid_t pid)
 {
   return process_wait(pid);
 }
@@ -448,10 +452,69 @@ mapid_t mmap(int fd, void* addr)
 	if(file==NULL)
 		return -1;
 	//main function
+	static mapid_t id = 0;
+	off_t ofs = 0;
+	uint32_t read_bytes = file_length(file);
+	while(read_bytes>0)
+	{
+     	 	size_t page_read_bytes = read_bytes < PGSIZE ? read_bytes : PGSIZE;
+      		size_t page_zero_bytes = PGSIZE - page_read_bytes;
+		struct sup_page* sp =  sp_alloc(file, ofs, addr, page_read_bytes, page_zero_bytes, true);
+		//Creating mmap struct
+		struct mmap* m = malloc(sizeof(struct mmap));
+		m->page = sp;
+		m->mapid = id;
+		m->fd = fd;
+		list_push_front(&thread_current()->mm_list, &m->elem);
+			
+		read_bytes -=page_read_bytes;
+		addr += PGSIZE;
+		ofs += page_read_bytes;
+	}
+	id++;
+	return id-1;
 	
 }
 
 void munmap(mapid_t mapping)
 {
+	struct list_elem* first = list_begin(&thread_current()->mm_list);
+        struct list_elem* last = list_end(&thread_current()->mm_list);
+        struct mmap* a;
+        while (first!=last)
+        {      a = list_entry(first, struct mmap, elem);
+		if(a->mapid==mapping)
+		{
+                      unmap(a);
+		}
+                first=list_next(first);
+        }
+}
+void munmap_all()
+{
+	struct list_elem* first = list_begin(&thread_current()->mm_list);
+        struct list_elem* last = list_end(&thread_current()->mm_list);
+        struct mmap* a;
+        while (first!=last)
+        {      a = list_entry(first, struct mmap, elem);
+               unmap(a);
+               first=list_next(first);
+        }
 
+}
+
+
+void unmap(struct mmap* mmap)
+{
+	mmap->page->status = PAGE_DEL;
+	if(pagedir_is_dirty(thread_current()->pagedir, mmap->page->user_addr))
+	{	file_write_at(mmap->page->file, mmap->page->user_addr, mmap->page->page_read_bytes, mmap->page->offset);
+	}
+	hash_delete(&thread_current()->spt, &mmap->page->elem);
+	list_remove(&mmap->elem);
+	pagedir_clear_page(thread_current()->pagedir, mmap->page->user_addr);
+	file_close(mmap->page->file);
+	f_free(mmap->page->frame);
+	free(mmap->page);
+	free(mmap);
 }

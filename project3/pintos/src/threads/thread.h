@@ -6,6 +6,8 @@
 #include <stdint.h>
 #include "filesys/file.h"
 #include "synch.h"
+#include "userprog/syscall.h"
+#include <hash.h>
 /* States in a thread's life cycle. */
 enum thread_status
   {
@@ -95,6 +97,13 @@ struct child
   int status;
 };
 
+struct mmap {
+	struct sup_page* page;
+	int mapid;
+	struct list_elem elem;
+	int fd;
+};
+
 struct thread
   {
     /* Owned by thread.c. */
@@ -126,6 +135,7 @@ struct thread
 #endif
     //suplemental page table
     struct hash spt;
+    struct list mm_list;
     /* Owned by thread.c. */
     unsigned magic;                     /* Detects stack overflow. */
   };

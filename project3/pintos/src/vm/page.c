@@ -1,24 +1,72 @@
-#include "page.h"
+#include "vm/page.h"
 #include <hash.h>
 #include "threads/malloc.h"
 #include "threads/thread.h"
-
+#include "devices/timer.h"
+#define STACK_CHECK (PHY_BASE - 8*(1024*1024))
 void 
 spt_init (){
-	hash_init(&spt, hash_func, hash_less, NULL);
+	hash_init(&thread_current()->spt, hash_func, hash_less, NULL);
 }
 
-struct sup_page* sp_alloc(uint32_t* kpage){
-	falloc(kpage);
+struct sup_page* sp_alloc(struct file *file, off_t ofs, uint8_t *upage,
+              uint32_t read_bytes, uint32_t zero_bytes, bool writable){
 	struct sup_page* sp = malloc(sizeof(struct sup_page));
-        sp->start_time = 0;//change later
+	
+        sp->start_time = timer_ticks();//change later
 	sp->user_addr = kpage;
 	sp->holder = thread_current();
-        sp->status = RUNNING;
-	sp->swap_index = -1;        
+        sp->status = PAGE_ALLOCATED;
+	sp->swap_index = NULL;
+	//File Info
+	sp->file = file;
+	sp->page_read_bytes=read_bytes;        
+	sp->page_zero_bytes=zero_bytes;
+	sp->writable = writable;
+	sp->offset = ofs;
+	//Inserting to hash        
 	hash_insert(&spt, &sp->elem);
         return sp;
 }
+
+bool page_fault_handler(void* fault_addr, uint32_t esp)
+{
+	struct sub_page* page;
+	page.user_addr = pg_round_down(fault_addr);
+	struct hash_elem * h = hash_find(&thread_current->pts, &page->elem);
+	if(h) 
+		return page_status_handler(hash_entry(e, struct sub_page, elem)); 
+	else if(page.user_addr >= STACK_CHECK && (uint32_t*)fault_addr>=(esp-32))
+		return stack_growth(fault_addr);
+	return false
+}	
+bool page_status_handler(struct sup_page* page)
+{	if(page->status ==PAGE_DEL || page->status ==PAGE_LOADED)
+		return false;
+	uint8_t * frame;
+	if(page->read_bytes ==0)
+		frame = falloc(PAL_USER|PAL_ZERO);
+	else
+		frame=falloc(PAL_USER);
+
+	if(page->status==PAGE_SWAPPED)
+		read_from_block(frame, page->swap_index);
+	if(page->page_read_bytes!=0 || page->status == PAGE_ALLOCATED)
+	{
+		file_read_at(page->file, frame,page->page_read_bytes, page->offset);
+		memset(frame+page->page_read_bytes, 0 , page->page_zero_bytes);
+	}
+	install_page(page->user_addr, frame, page->writtable);
+	page->status = PAGE_LOADED;
+	return true;
+} 
+		
+bool stack_growth(void* fault_addr)
+{
+	return false;
+}		
+
+		
 
 bool hash_less(const struct hash_elem* a, const struct hash_elem* b, void* aux UNUSED)
 {

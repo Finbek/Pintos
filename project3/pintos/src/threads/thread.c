@@ -14,7 +14,8 @@
 #ifdef USERPROG
 #include "userprog/process.h"
 #include "vm/frame.h"
-#include "page.h"
+#include "vm/page.h"
+
 #endif
 
 /* Random value for struct thread's `magic' member.
@@ -96,7 +97,6 @@ thread_init (void)
   list_init (&all_list);
   init_frame_table();
   init_swap();
-  spt_init(); 
     /* Set up a thread structure for the running thread. */
   initial_thread = running_thread ();
   init_thread (initial_thread, "main", PRI_DEFAULT);
@@ -388,7 +388,6 @@ thread_get_recent_cpu (void)
   /* Not yet implemented. */
   return 0;
 }
-
 /* Idle thread.  Executes when no other thread is ready to run.
 
    The idle thread is initially put on the ready list by
@@ -482,7 +481,9 @@ init_thread (struct thread *t, const char *name, int priority)
   list_init(&t->children);
   list_init(&t->list_fd);
   list_init(&t->status_list);
+  list_init(&t->mm_list);
   sema_init(&t->parent_sleep, 0);
+  spt_init(); 
 #endif
   list_push_back (&all_list, &t->allelem);
 }
@@ -610,7 +611,6 @@ allocate_tid (void)
 
   return tid;
 }
-
 /* Offset of `stack' member within `struct thread'.
    Used by switch.S, which can't figure it out on its own. */
 uint32_t thread_stack_ofs = offsetof (struct thread, stack);
