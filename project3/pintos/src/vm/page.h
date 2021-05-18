@@ -1,7 +1,9 @@
 #ifndef VM_PAGE_H
 #define VM_PAGE_H
-
 #include "hash.h"
+
+#include "filesys/filesys.h"
+
 enum page_status{
 	PAGE_SWAPPED,
 	PAGE_LOADED,
@@ -11,7 +13,7 @@ enum page_status{
 
 struct sup_page{
 	unsigned start_time;
-	uint32_t* user_addr;
+	void* user_addr;
 	struct thread* holder;
 	struct hash_elem elem;
 	enum page_status status;
@@ -27,8 +29,10 @@ struct sup_page{
 };
 
 struct sup_page* sp_alloc(struct file *file, off_t ofs, uint8_t *upage,uint32_t read_bytes, uint32_t zero_bytes, bool writable);
+bool stack_growth(void* fault_addr);
+bool page_status_handler(struct sup_page* page);
 void spt_init();
 bool page_fault_handler(void* fault_addr, uint32_t esp);
-unsigned hash_func(const struct hash_elem*, void *aux UNUSED);
-bool hash_less(const struct hash_elem*, const struct hash_elem*, void *aux UNUSED);
+unsigned hash_func(const struct hash_elem*, void *aux);
+bool hash_less(const struct hash_elem*, const struct hash_elem*, void *aux);
 #endif

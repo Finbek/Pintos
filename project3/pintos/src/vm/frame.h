@@ -5,12 +5,12 @@
 #include "threads/thread.h"
 #include <list.h>
 #include <stdint.h>
-
+#include "vm/page.h"
 struct list frame_table;
  
 struct frame_table_elem {
 	uint32_t * frame;
-	struct sup_page_table_elem* page;
+	struct sup_page* page;
 	struct list_elem elem;
 	struct thread* holder;
 	//add other members

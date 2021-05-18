@@ -40,11 +40,11 @@ bool list_less (const struct list_elem *a,
                              void *aux UNUSED)
 {
 	//Change it according the eviction policy time - based
-	printf("A elem: %s\n",list_entry(a, struct frame_table_elem, elem)->page->time);
+/*	printf("A elem: %s\n",list_entry(a, struct frame_table_elem, elem)->page->time);
 	printf("B elem: %s\n",list_entry(b, struct frame_table_elem, elem)->page->time);
 	printf("A is less than B");
 	printf(list_entry(a, struct frame_table_elem, elem)->page->time<list_entry(b, struct frame_table_elem, elem)->page->time);
-	return list_entry(a, struct frame_table_elem, elem)->page->time<list_entry(b, struct frame_table_elem, elem)->page->time;
+*/	return list_entry(a, struct frame_table_elem, elem)->page->start_time<list_entry(b, struct frame_table_elem, elem)->page->start_time;
 }
 
 
@@ -76,15 +76,15 @@ struct frame_table_elem*  find_frame(void * frame)
 
 bool fevict(void *frame)
 {
-	struct frame_table_elen* f = list_entry(list_begin(&frame_table),struct frame_table_elem, elem);
-	if(pagedir_is_dirty(f->holder->pagedir, f->page->addr))
+	struct frame_table_elem* f = list_entry(list_begin(&frame_table),struct frame_table_elem, elem);
+	if(pagedir_is_dirty(f->holder->pagedir, f->page->user_addr))
 	{
-		f->page->status = SWAP;
+		f->page->status = PAGE_SWAPPED;
 		f->page->swap_index = write_to_block(f->frame);	
 		//write to the file
 
 	}
-	pagedir_clear_page(f->holder, f->page->address);
+	pagedir_clear_page(f->holder, f->page->user_addr);
 	list_remove(&f->elem);
 	palloc_free_page(f->frame);
 	free(f);
