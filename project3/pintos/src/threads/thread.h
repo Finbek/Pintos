@@ -95,13 +95,6 @@ struct child
   int status;
 };
 
-struct sup_page_table_elem {
-   uint32_t* vaddr;
-   int time;
-   bool dirty;
-   bool accessed;
-};
-
 struct thread
   {
     /* Owned by thread.c. */
@@ -131,7 +124,8 @@ struct thread
     struct list status_list; 
     struct list_elem child_elem; 
 #endif
-    struct hash * sup_page_table;
+    //suplemental page table
+    struct hash spt;
     /* Owned by thread.c. */
     unsigned magic;                     /* Detects stack overflow. */
   };
