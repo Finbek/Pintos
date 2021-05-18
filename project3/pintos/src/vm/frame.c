@@ -24,6 +24,7 @@ void *falloc(enum palloc_flags flags)
 		
 		struct frame_table_elem * fte = malloc(sizeof(struct frame_table_elem));
 		fte->frame = frame;
+		fte->holder = thread_current();
 		list_insert_ordered(&frame_table, &fte->elem, list_less, NULL);
 		return frame;
 	}
@@ -70,7 +71,18 @@ struct frame_table_elem*  find_frame(void * frame)
 
 bool fevict(void *frame)
 {
-	return false;
+	struct frame_table_elen* f = list_entry(list_begin(&frame_table),struct frame_table_elem, elem);
+	if(pagedir_is_dirty(f->holder->pagedir, f->page->addr))
+	{
+		f->page->status = SWAP;
+		f->page->swap_index = write_to_block(f->frame);	
+		//write to the file
+
+	}
+	list_remove(&f->elem);
+	palloc_free_page(f->frame);
+	free(f);
+	return true;
 }
 
 
