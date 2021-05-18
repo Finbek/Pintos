@@ -84,6 +84,7 @@ bool fevict(void *frame)
 		//write to the file
 
 	}
+	pagedir_clear_page(f->holder, f->page->address);
 	list_remove(&f->elem);
 	palloc_free_page(f->frame);
 	free(f);
