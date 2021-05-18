@@ -22,14 +22,19 @@ void *falloc(enum palloc_flags flags)
 			//reallocate
 		}
 		
-		struct frame_table_elem * fte = malloc(sizeof(struct frame_table_elem));
-		fte->frame = frame;
-		fte->holder = thread_current();
-		list_insert_ordered(&frame_table, &fte->elem, list_less, NULL);
+		struct frame_table_elem * f = malloc(sizeof(struct frame_table_elem));
+		f->frame = frame;
+		f->holder = thread_current();
+		list_insert_ordered(&frame_table, &f->elem, list_less, NULL);
 		return frame;
 	}
 
-
+void update_order(uint8_t *frame)
+	{
+		struct frame_table_elem * f = find_frame(frame);
+		list_remove(&f->elem);
+		list_insert_ordered(&frame_table, &f->elem, list_less, NULL);
+	}
 bool list_less (const struct list_elem *a,
                              const struct list_elem *b,
                              void *aux UNUSED)
