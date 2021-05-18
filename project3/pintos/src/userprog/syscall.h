@@ -4,6 +4,7 @@
 #include <stdio.h>
 
 typedef int pid_t;
+typedef int mapid_t;
 void syscall_init (void);
 
 

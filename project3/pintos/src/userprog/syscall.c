@@ -131,7 +131,21 @@ syscall_handler (struct intr_frame *f)
  	{
 		int fd = *((int*)f->esp+1);
 		close(fd);	
-	}	
+	}
+	if(code ==SYS_MMAP)
+	{
+		int fd = *((int*)f->esp+4);
+		void* addr = (void*)(*((int*)f->esp+5));
+		if (validation(addr))
+			f->eax = mmap(int fd, void* addr)
+		else
+			exit(-1)
+	}
+	if (code ==SYS_MUNMAP)	
+	{
+		mapid_t mapping = *((int*)f->esp+1);
+		muunmap(mapping); 
+	}
   }
   else
   {
@@ -423,4 +437,21 @@ void close (int fd)
 	list_remove(&a->elem);
 	free(a);
 	} 
+}
+
+mapid_t mmap(int fd, void* addr)
+{
+	struct file_fd* file_fd_opened = find_file_fd(fd);
+	if(file_fd_opened==NULL || file_length(file_fd_opened->file)==0 || addr==NULL || pg_ofs(addr)!=0)
+		return -1; 
+	struct file* file = file_reopen(file_fd_opened->file);
+	if(file==NULL)
+		return -1;
+	//main function
+	
+}
+
+void munmap(mapid_t mapping)
+{
+
 }
