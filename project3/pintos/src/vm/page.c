@@ -7,13 +7,16 @@
 #include "threads/vaddr.h"
 #include "userprog/process.h"
 #define STACK_CHECK (PHYS_BASE - 8*(1024*1024))
+
+static bool hash_bool;
 void 
 spt_init (struct hash* spt){
-	bool hash_bool = hash_init(&spt, hash_func, hash_less, NULL);
+	hash_bool = hash_init(&spt, hash_func, hash_less, NULL);
 }
 
 struct sup_page* sp_alloc(struct file *file, off_t ofs, uint8_t *upage,
               uint32_t read_bytes, uint32_t zero_bytes, bool writable){
+	printf("SP_ALLOC");
 	struct sup_page* sp = malloc(sizeof(struct sup_page));
         sp->start_time = timer_ticks();//change later
 	sp->user_addr = upage;
@@ -26,8 +29,11 @@ struct sup_page* sp_alloc(struct file *file, off_t ofs, uint8_t *upage,
 	sp->page_zero_bytes=zero_bytes;
 	sp->writtable = writable;
 	sp->offset = ofs;
+	printf("%d\n",hash_bool);
 	//Inserting to hash        
 	hash_insert(&thread_current()->spt, &sp->elem);
+	printf("SP_ALLOC: END");
+	
         return sp;
 }
 
@@ -92,7 +98,7 @@ bool hash_less(const struct hash_elem* a, const struct hash_elem* b, void* aux)
 	return (page_a->user_addr < page_b->user_addr);
 }
 
-unsigned hash_func(const struct hash_elem* elem, void* aux){
-	const struct sup_page* p = hash_entry(elem, struct sup_page, elem);
+unsigned hash_func(const struct hash_elem* e, void* aux){
+	const struct sup_page* p = hash_entry(e, struct sup_page, elem);
 	return hash_bytes (&p->user_addr, sizeof p->user_addr);
 }
