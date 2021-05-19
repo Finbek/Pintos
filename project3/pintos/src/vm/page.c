@@ -40,9 +40,10 @@ bool page_fault_handler(void* fault_addr, uint32_t esp)
 	if(h) 
 		return page_status_handler(hash_entry(h, struct sup_page, elem)); 
 	else if(page.user_addr > STACK_CHECK && (uint32_t*)fault_addr>=(esp-32))
-		return stack_growth(fault_addr);
+		return stack_growth(pg_round_down(fault_addr));
 	return false;
-}	
+}
+	
 bool page_status_handler(struct sup_page* page)
 {	if(page->status ==PAGE_DEL || page->status ==PAGE_LOADED)
 		return false;
@@ -54,7 +55,7 @@ bool page_status_handler(struct sup_page* page)
 
 	if(page->status==PAGE_SWAPPED)
 		read_from_block(frame, page->swap_index);
-	if(page->page_read_bytes!=0 || page->status == PAGE_ALLOCATED)
+	if(page->page_read_bytes!=0 &&  page->status == PAGE_ALLOCATED)
 	{
 		file_read_at(page->file, frame,page->page_read_bytes, page->offset);
 		memset(frame+page->page_read_bytes, 0 , page->page_zero_bytes);
@@ -64,9 +65,17 @@ bool page_status_handler(struct sup_page* page)
 	return true;
 } 
 		
-bool stack_growth(void* fault_addr)
+bool stack_growth(void* user_addr)
 {
-	return false;
+	struct sup_page* sp = malloc(sizeof(struct sup_page));
+	sp->writtable = true;
+	sp->user_addr = user_addr;
+	sp->status = PAGE_ALLOCATED;
+	uint8_t * frame = falloc(PAL_USER|PAL_ZERO);
+	install_page(sp->user_addr, frame, true);
+	hash_insert(&thread_current()->spt, &sp->elem);
+	return true;
+	
 }		
 
 		

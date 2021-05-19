@@ -17,9 +17,9 @@ void *falloc(enum palloc_flags flags)
 		uint8_t* frame = palloc_get_page(flags);
 		if( frame==NULL)
 		{
-			PANIC("NO SPACE");
-			//evict
-			//reallocate
+			fevict();
+			uint8_t* frame =palloc_get_page(flags);
+			ASSERT(frame!=NULL);
 		}
 		
 		struct frame_table_elem * f = malloc(sizeof(struct frame_table_elem));
@@ -74,14 +74,18 @@ struct frame_table_elem*  find_frame(void * frame)
         return NULL;
 }
 
-bool fevict(void *frame)
+bool fevict()
 {
 	struct frame_table_elem* f = list_entry(list_begin(&frame_table),struct frame_table_elem, elem);
-	if(pagedir_is_dirty(f->holder->pagedir, f->page->user_addr))
-	{
-		f->page->status = PAGE_SWAPPED;
-		f->page->swap_index = write_to_block(f->frame);	
-		//write to the file
+	if(pagedir_is_accessed(f->holder->pagedir, f->page->user_addr))
+	{	
+		pagedir_set_accessed(f->holder->pagedir, f->page->user_addr, false);
+		if( pagedir_is_dirty(f->holder->pagedir, f->page->user_addr))
+		{
+			file_write_at(f->page->file, f->frame, f->page->page_read_bytes, f->page->offset);
+		}
+			f->page->status = PAGE_SWAPPED;
+			f->page->swap_index = write_to_block(f->frame);	
 
 	}
 	pagedir_clear_page(f->holder, f->page->user_addr);

@@ -147,7 +147,7 @@ syscall_handler (struct intr_frame *f)
 	if (code ==SYS_MUNMAP)	
 	{
 		mapid_t mapping = *((int*)f->esp+1);
-		muunmap(mapping); 
+		munmap(mapping); 
 	}
   }
   else

@@ -21,7 +21,7 @@ bool list_less (const struct list_elem *a,const struct list_elem *b,void *aux UN
 void f_free(void* frame);
 void init_frame_table();
 struct frame_table_elem*  find_frame(void * frame);
-bool fevict(void *frame);
+bool fevict();
 
 
 
