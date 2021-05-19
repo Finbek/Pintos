@@ -9,9 +9,22 @@
 #define STACK_CHECK (PHYS_BASE - 8*(1024*1024))
 
 static bool hash_bool;
+
+bool hash_less(const struct hash_elem* a, const struct hash_elem* b, void* aux UNUSED)
+{
+        const struct sup_page* page_a = hash_entry(a, struct sup_page, elem);
+        const struct sup_page* page_b = hash_entry(b, struct sup_page, elem);
+        return (page_a->user_addr < page_b->user_addr);
+}
+
+unsigned hash_func(const struct hash_elem* e, void* aux UNUSED){
+        const struct sup_page* p = hash_entry(e, struct sup_page, elem);
+       return hash_bytes (&p->user_addr, sizeof p->user_addr);
+}
+
 void 
-spt_init (struct hash* spt){
-	hash_bool = hash_init(&spt, hash_func, hash_less, NULL);
+spt_init (){
+	hash_bool = hash_init(&thread_current()->spt, hash_func, hash_less, NULL);
 }
 
 struct sup_page* sp_alloc(struct file *file, off_t ofs, uint8_t *upage,
@@ -31,7 +44,7 @@ struct sup_page* sp_alloc(struct file *file, off_t ofs, uint8_t *upage,
 	sp->offset = ofs;
 	printf("%d\n",hash_bool);
 	//Inserting to hash        
-	hash_insert(&thread_current()->spt, &sp->elem);
+	hash_insert(&(thread_current()->spt), &sp->elem);
 	printf("SP_ALLOC: END");
 	
         return sp;
@@ -91,14 +104,3 @@ bool stack_growth(void* user_addr)
 
 		
 
-bool hash_less(const struct hash_elem* a, const struct hash_elem* b, void* aux)
-{
-	const struct sup_page* page_a = hash_entry(a, struct sup_page, elem);
-	const struct sup_page* page_b = hash_entry(b, struct sup_page, elem);
-	return (page_a->user_addr < page_b->user_addr);
-}
-
-unsigned hash_func(const struct hash_elem* e, void* aux){
-	const struct sup_page* p = hash_entry(e, struct sup_page, elem);
-	return hash_bytes (&p->user_addr, sizeof p->user_addr);
-}

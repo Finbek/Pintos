@@ -70,7 +70,7 @@ start_process (void *file_name_)
   bool success;
 
   /* initialize spt hash*/
-  spt_init(&(thread_current()->spt));
+  spt_init();
 
   /* Initialize interrupt frame and load executable. */
   memset (&if_, 0, sizeof if_);

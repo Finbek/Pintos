@@ -33,6 +33,4 @@ bool stack_growth(void* fault_addr);
 bool page_status_handler(struct sup_page* page);
 void spt_init();
 bool page_fault_handler(void* fault_addr, uint32_t esp);
-unsigned hash_func(const struct hash_elem*, void *aux);
-bool hash_less(const struct hash_elem*, const struct hash_elem*, void *aux);
 #endif
