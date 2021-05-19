@@ -446,9 +446,10 @@ void close (int fd)
 
 mapid_t mmap(int fd, void* addr)
 {
+	if(fd==1 || fd==0)
+		return -1;
 	struct file_fd* file_fd_opened = find_file_fd(fd);
-	if(file_fd_opened==NULL || file_length(file_fd_opened->file)==0 || addr==NULL || pg_ofs(addr)!=0)
-		return -1; 
+	if(file_fd_opened==NULL || file_length(file_fd_opened->file)==0 || addr==NULL || pg_ofs(addr)!=0)		return -1; 
 	struct file* file = file_reopen(file_fd_opened->file);
 	if(file==NULL)
 		return -1;

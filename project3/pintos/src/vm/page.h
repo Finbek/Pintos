@@ -27,7 +27,7 @@ struct sup_page{
 	struct file* file;
 		
 };
-
+static bool flag_frame_init = false;
 struct sup_page* sp_alloc(struct file *file, off_t ofs, uint8_t *upage,uint32_t read_bytes, uint32_t zero_bytes, bool writable);
 bool stack_growth(void* fault_addr);
 bool page_status_handler(struct sup_page* page);

@@ -9,13 +9,14 @@
 #define STACK_CHECK (PHYS_BASE - 8*(1024*1024))
 void 
 spt_init (struct hash* spt){
+	printf("HASH CREATION\n");
 	hash_init(spt, hash_func, hash_less, NULL);
 }
 
 struct sup_page* sp_alloc(struct file *file, off_t ofs, uint8_t *upage,
               uint32_t read_bytes, uint32_t zero_bytes, bool writable){
 	struct sup_page* sp = malloc(sizeof(struct sup_page));
-	
+	printf("HERE\n");	
         sp->start_time = timer_ticks();//change later
 	sp->user_addr = upage;
 	sp->holder = thread_current();
@@ -48,6 +49,11 @@ bool page_status_handler(struct sup_page* page)
 {	if(page->status ==PAGE_DEL || page->status ==PAGE_LOADED)
 		return false;
 	uint8_t * frame;
+	if(flag_frame_init==false)
+	{	
+		init_frame_table();
+		flag_frame_init=true;
+	}
 	if(page->page_read_bytes ==0)
 		frame = falloc(PAL_USER|PAL_ZERO);
 	else

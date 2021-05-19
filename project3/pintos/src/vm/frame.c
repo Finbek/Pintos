@@ -84,6 +84,11 @@ bool fevict()
 		{
 			file_write_at(f->page->file, f->frame, f->page->page_read_bytes, f->page->offset);
 		}
+		if(flag_swap_init==false)
+		{
+			init_swap();
+			flag_swap_init = true;
+		}
 			f->page->status = PAGE_SWAPPED;
 			f->page->swap_index = write_to_block(f->frame);	
 

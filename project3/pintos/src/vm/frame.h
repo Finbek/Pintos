@@ -16,6 +16,7 @@ struct frame_table_elem {
 	//add other members
 };
 
+static bool flag_swap_init = false;
 void *falloc(enum palloc_flags flags);
 bool list_less (const struct list_elem *a,const struct list_elem *b,void *aux UNUSED);
 void f_free(void* frame);

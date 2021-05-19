@@ -30,8 +30,8 @@ static bool load (const char *cmdline, void (**eip) (void), void **esp);
 tid_t
 process_execute (const char *file_name) 
 {
-  char *fn_copy,*token,  *save_ptr;
 	printf("\n ALLOCATING PAGE \n");
+  char *fn_copy,*token,  *save_ptr;
   tid_t tid;
   token = malloc(strlen(file_name)+1);
   strlcpy (token, file_name, strlen(file_name)+1);

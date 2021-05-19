@@ -95,8 +95,6 @@ thread_init (void)
   lock_init (&tid_lock);
   list_init (&ready_list);
   list_init (&all_list);
-  init_frame_table();
-  init_swap();
     /* Set up a thread structure for the running thread. */
   initial_thread = running_thread ();
   init_thread (initial_thread, "main", PRI_DEFAULT);
@@ -481,7 +479,7 @@ init_thread (struct thread *t, const char *name, int priority)
   list_init(&t->children);
   list_init(&t->list_fd);
   list_init(&t->status_list);
-  printf("\n ALLOCATING PAGE");
+  printf("\n Thread_CREATE");
   list_init(&t->mm_list);
   sema_init(&t->parent_sleep, 0);
   spt_init(&t->spt); 
