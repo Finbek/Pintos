@@ -69,6 +69,10 @@ start_process (void *file_name_)
   char *file_name = file_name_;
   struct intr_frame if_;
   bool success;
+
+  /* initialize spt hash*/
+  spt_init(&(thread_current()->spt));
+
   /* Initialize interrupt frame and load executable. */
   memset (&if_, 0, sizeof if_);
   if_.gs = if_.fs = if_.es = if_.ds = if_.ss = SEL_UDSEG;
@@ -115,7 +119,6 @@ for (token = strtok_r (fn_copy, " ", &save_ptr); i<argc;
     thread_yield();
     return;
 }
-
    sema_up(&my_parent->parent_sleep);
         thread_yield();
     palloc_free_page (file_name);

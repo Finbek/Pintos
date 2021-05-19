@@ -10,7 +10,8 @@
 void 
 spt_init (struct hash* spt){
 	printf("HASH CREATION\n");
-	hash_init(spt, hash_func, hash_less, NULL);
+	bool hash_bool = hash_init(&spt, hash_func, hash_less, NULL);
+	if (hash_bool) { printf("\n hash init true \n"); }
 }
 
 struct sup_page* sp_alloc(struct file *file, off_t ofs, uint8_t *upage,
