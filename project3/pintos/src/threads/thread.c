@@ -481,9 +481,10 @@ init_thread (struct thread *t, const char *name, int priority)
   list_init(&t->children);
   list_init(&t->list_fd);
   list_init(&t->status_list);
+  printf("\n ALLOCATING PAGE");
   list_init(&t->mm_list);
   sema_init(&t->parent_sleep, 0);
-  spt_init(); 
+  spt_init(&t->spt); 
 #endif
   list_push_back (&all_list, &t->allelem);
 }

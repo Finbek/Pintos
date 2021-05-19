@@ -31,6 +31,7 @@ bool validation(void * addr);
 static void
 syscall_handler (struct intr_frame *f) 
 {
+	printf("\n ALLOCATING PAGE");
   if(validation((int*)f->esp))
   {
   	int code = *(int*)f->esp;

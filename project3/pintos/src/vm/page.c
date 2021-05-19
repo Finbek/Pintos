@@ -8,8 +8,8 @@
 #include "userprog/process.h"
 #define STACK_CHECK (PHYS_BASE - 8*(1024*1024))
 void 
-spt_init (){
-	hash_init(&thread_current()->spt, hash_func, hash_less, NULL);
+spt_init (struct hash* spt){
+	hash_init(spt, hash_func, hash_less, NULL);
 }
 
 struct sup_page* sp_alloc(struct file *file, off_t ofs, uint8_t *upage,

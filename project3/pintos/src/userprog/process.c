@@ -31,6 +31,7 @@ tid_t
 process_execute (const char *file_name) 
 {
   char *fn_copy,*token,  *save_ptr;
+	printf("\n ALLOCATING PAGE \n");
   tid_t tid;
   token = malloc(strlen(file_name)+1);
   strlcpy (token, file_name, strlen(file_name)+1);
@@ -509,6 +510,7 @@ static bool
 load_segment (struct file *file, off_t ofs, uint8_t *upage,
               uint32_t read_bytes, uint32_t zero_bytes, bool writable) 
 {
+	printf("\n ALLOCATING PAGE");
   ASSERT ((read_bytes + zero_bytes) % PGSIZE == 0);
   ASSERT (pg_ofs (upage) == 0);
   ASSERT (ofs % PGSIZE == 0);
