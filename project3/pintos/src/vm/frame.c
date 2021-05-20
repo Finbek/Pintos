@@ -6,9 +6,10 @@
 #include "vm/frame.h"
 
 //Initialize by this
-
+struct lock frame_lock;
 void init_frame_table()
 {
+	lock_init(&frame_lock);
 	list_init(&frame_table);
 }
 
@@ -21,11 +22,12 @@ void *falloc(enum palloc_flags flags)
 			uint8_t* frame =palloc_get_page(flags);
 			ASSERT(frame!=NULL);
 		}
-		
+		lock_acquire(&frame_lock);
 		struct frame_table_elem * f = malloc(sizeof(struct frame_table_elem));
 		f->frame = frame;
 		f->holder = thread_current();
 		list_insert_ordered(&frame_table, &f->elem, list_less, NULL);
+		lock_release(&frame_lock);
 		return frame;
 	}
 
@@ -40,11 +42,7 @@ bool list_less (const struct list_elem *a,
                              void *aux UNUSED)
 {
 	//Change it according the eviction policy time - based
-/*	printf("A elem: %s\n",list_entry(a, struct frame_table_elem, elem)->page->time);
-	printf("B elem: %s\n",list_entry(b, struct frame_table_elem, elem)->page->time);
-	printf("A is less than B");
-	printf(list_entry(a, struct frame_table_elem, elem)->page->time<list_entry(b, struct frame_table_elem, elem)->page->time);
-*/	return list_entry(a, struct frame_table_elem, elem)->page->start_time<list_entry(b, struct frame_table_elem, elem)->page->start_time;
+	return list_entry(a, struct frame_table_elem, elem)->page->start_time<list_entry(b, struct frame_table_elem, elem)->page->start_time;
 }
 
 

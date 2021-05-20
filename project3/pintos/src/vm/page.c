@@ -29,7 +29,6 @@ spt_init (){
 
 struct sup_page* sp_alloc(struct file *file, off_t ofs, uint8_t *upage,
               uint32_t read_bytes, uint32_t zero_bytes, bool writable){
-	printf("SP_ALLOC");
 	struct sup_page* sp = malloc(sizeof(struct sup_page));
         sp->start_time = timer_ticks();//change later
 	sp->user_addr = upage;
@@ -42,10 +41,8 @@ struct sup_page* sp_alloc(struct file *file, off_t ofs, uint8_t *upage,
 	sp->page_zero_bytes=zero_bytes;
 	sp->writtable = writable;
 	sp->offset = ofs;
-	printf("%d\n",hash_bool);
 	//Inserting to hash        
 	hash_insert(&(thread_current()->spt), &sp->elem);
-	printf("SP_ALLOC: END");
 	
         return sp;
 }
@@ -90,12 +87,18 @@ bool page_status_handler(struct sup_page* page)
 		
 bool stack_growth(void* user_addr)
 {
-	printf("STACK GROW\n");
 	struct sup_page* sp = malloc(sizeof(struct sup_page));
 	sp->writtable = true;
 	sp->user_addr = user_addr;
 	sp->status = PAGE_ALLOCATED;
+	if(flag_frame_init==false)
+        {
+                init_frame_table();
+                flag_frame_init=true;
+        }
 	uint8_t * frame = falloc(PAL_USER|PAL_ZERO);
+	if(frame==NULL)
+		printf("NULL FRAME");
 	install_page(sp->user_addr, frame, true);
 	hash_insert(&thread_current()->spt, &sp->elem);
 	return true;

@@ -527,7 +527,7 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 
 
 //Allocating the page
-	sp_alloc(file, ofs, upage,read_bytes, zero_bytes, writable);
+      sp_alloc(file, ofs, upage, page_read_bytes, page_zero_bytes, writable);
 
 
       /* Advance. */
@@ -545,10 +545,10 @@ static bool
 setup_stack (void **esp) 
 {
   uint8_t *kpage;
-  bool success = stack_growth(((uint8_t*) PHYS_BASE) -PGSIZE);
+  bool success = false;
+  success = stack_growth (((uint8_t *) PHYS_BASE) - PGSIZE);
   if (success)
         *esp = PHYS_BASE;
-  
   return success;
 }
 

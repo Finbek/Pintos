@@ -140,7 +140,6 @@ page_fault (struct intr_frame *f)
   /* Turn interrupts back on (they were only off so that we could
      be assured of reading CR2 before it changed). */
   intr_enable ();
-
   /* Count page faults. */
   page_fault_cnt++;
 
@@ -148,8 +147,13 @@ page_fault (struct intr_frame *f)
   not_present = (f->error_code & PF_P) == 0;
   write = (f->error_code & PF_W) != 0;
   user = (f->error_code & PF_U) != 0;
-  if(is_user_vaddr(fault_addr) && not_present &&  page_fault_handler(fault_addr, f->esp)==true)
-		return;
+  if(fault_addr==NULL || is_user_vaddr(fault_addr)==false  ||  not_present==false)
+  {		
+		exit(-1);
+  }
+  if(page_fault_handler(fault_addr)==true)
+		return true;
+
   /* To implement virtual memory, delete the rest of the function
      body, and replace it with code that brings in the page to
      which fault_addr refers. */
