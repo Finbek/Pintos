@@ -50,11 +50,11 @@ syscall_handler (struct intr_frame *f)
 	}
 	if(code ==SYS_EXEC)
 	{
-		if(!validation(((int*)f->esp+1),f->esp))
+		const char* cmd_line = (char*)(*((int*)f->esp+1));
+		if(!validation(cmd_line,f->esp))
                         exit(-1);
                 else
                 {
-		const char* cmd_line = (char*)(*((int*)f->esp+1));
 		f->eax=exec(cmd_line);//CHECK THIS PID CHILD
 		 }
 	} 
@@ -160,7 +160,7 @@ bool validation(void* addr, void* esp)
 
 {
 	if (addr!=NULL && is_user_vaddr(addr)){
-		if (page_fault_handler(addr, esp)==true)
+		if (page_fault_handler((void*) addr, esp)==true)
 			return true;
 	}
 	return false;
