@@ -26,12 +26,12 @@ syscall_init (void)
 }
 struct file_fd* find_file_fd(int fd_number);
 
-bool validation(void * addr);
+bool validation(void * addr, void*esp);
 
 static void
 syscall_handler (struct intr_frame *f) 
 {
-  if(validation((int*)f->esp))
+  if(validation((int*)f->esp, f->esp))
   {
   	int code = *(int*)f->esp;
 
@@ -40,7 +40,7 @@ syscall_handler (struct intr_frame *f)
 		halt();
 	if(code == SYS_EXIT)
 	{	
-		if(!validation(((int*)f->esp+1)))
+		if(!validation(((int*)f->esp+1),f->esp))
 			exit(-1);
 		else
 		{
@@ -50,7 +50,7 @@ syscall_handler (struct intr_frame *f)
 	}
 	if(code ==SYS_EXEC)
 	{
-		if(!validation(((int*)f->esp+1)))
+		if(!validation(((int*)f->esp+1),f->esp))
                         exit(-1);
                 else
                 {
@@ -60,7 +60,7 @@ syscall_handler (struct intr_frame *f)
 	} 
 	if(code == SYS_WAIT)
 	{
-		if(!validation(((int*)f->esp+1)))
+		if(!validation(((int*)f->esp+1),f->esp))
                         exit(-1);
                 else
                 {
@@ -72,7 +72,7 @@ syscall_handler (struct intr_frame *f)
                 
 		const char* file = (char*)(*((int*)f->esp+4));
 		unsigned initial_size =*((unsigned*)f->esp+5);
-		if (validation(file))
+		if (validation(file,f->esp))
 			f->eax = create(file, initial_size);
 		else
 			exit(-1);
@@ -80,7 +80,7 @@ syscall_handler (struct intr_frame *f)
 	if(code == SYS_REMOVE)
 	{
 		const char* file = (char*)(*((int*)f->esp+1));
-		if(validation(file))
+		if(validation(file,f->esp))
 			f->eax = remove(file);
 		else
 			exit(-1);
@@ -88,7 +88,7 @@ syscall_handler (struct intr_frame *f)
 	if(code == SYS_OPEN)
 	{
 		const char* file = (char*)(*((int*)f->esp+1));
-		if(validation(file))
+		if(validation(file,f->esp))
 			f->eax = open(file);
 		else
 			exit(-1);
@@ -104,7 +104,7 @@ syscall_handler (struct intr_frame *f)
 		int fd = *((int*)f->esp+5);
 		void* buffer = (void*)(*((int*)f->esp+6));
 		unsigned size = *((unsigned*)f->esp+7);
-		if (validation(buffer) && validation(buffer+size-1))
+		if (validation(buffer,f->esp) && validation(buffer+size-1,f->esp))
 			f->eax = read(fd, buffer, size);
 		else
 			exit(-1);
@@ -114,7 +114,7 @@ syscall_handler (struct intr_frame *f)
                 	int fd = *((int*)f->esp+5);
                 	void* buffer = (void*)(*((int*)f->esp+6));
                 	unsigned size = *((unsigned*)f->esp+7);
-			if (validation(buffer) && validation(buffer+size-1))
+			if (validation(buffer,f->esp) && validation(buffer+size-1,f->esp))
 				f->eax = write(fd, buffer, size);
 			else
 				exit(-1);
@@ -139,7 +139,7 @@ syscall_handler (struct intr_frame *f)
 	{
 		int fd = *((int*)f->esp+4);
 		void* addr = (void*)(*((int*)f->esp+5));
-		if (validation(addr))
+		if (validation(addr,f->esp))
 			f->eax = mmap(fd, addr);
 		else
 			exit(-1);
@@ -156,10 +156,14 @@ syscall_handler (struct intr_frame *f)
   } 
 }
 
-bool validation(void* addr)
+bool validation(void* addr, void* esp)
 
 {
-	return (addr!=NULL && is_user_vaddr(addr)&& (pagedir_get_page(thread_current()->pagedir,addr)!=NULL));
+	if (addr!=NULL && is_user_vaddr(addr)){
+		if (page_fault_handler(addr, esp)==true)
+			return true;
+	}
+	return false;
 }
 
 

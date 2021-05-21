@@ -42,6 +42,6 @@ void munmap(mapid_t mapping);
 
 mapid_t mmap(int fd, void* addr);
 
-bool validation(void* addr);
+bool validation(void* addr, void* esp);
 
 #endif /* userprog/syscall.h */

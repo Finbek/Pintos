@@ -60,8 +60,10 @@ bool page_fault_handler(void* fault_addr, uint32_t esp)
 }
 	
 bool page_status_handler(struct sup_page* page)
-{	if(page->status ==PAGE_DEL || page->status ==PAGE_LOADED)
+{	if(page->status ==PAGE_DEL)
 		return false;
+	if(page->status==PAGE_LOADED)
+		return true;
 	uint8_t * frame;
 	if(flag_frame_init==false)
 	{	
