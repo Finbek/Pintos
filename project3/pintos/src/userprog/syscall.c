@@ -102,22 +102,32 @@ syscall_handler (struct intr_frame *f)
 	{
 		
 		int fd = *((int*)f->esp+5);
-		void* buffer = (void*)(*((int*)f->esp+6));
+		char* buffer = (char*)(*((int*)f->esp+6));
 		unsigned size = *((unsigned*)f->esp+7);
-		if (validation(buffer,f->esp) && validation(buffer+size-1,f->esp))
-			f->eax = read(fd, buffer, size);
-		else
-			exit(-1);
+		unsigned i =0;
+                while(i<=size)
+                        {
+                                if(validation((void*)buffer+i, f->esp)==false)
+                                        exit(-1);
+
+                        i++;
+                        }
+		f->eax = read(fd, (void*)buffer, size);
 	}
 	if(code == SYS_WRITE)
 	{
                 	int fd = *((int*)f->esp+5);
-                	void* buffer = (void*)(*((int*)f->esp+6));
+                	char* buffer = (char*)(*((int*)f->esp+6));
                 	unsigned size = *((unsigned*)f->esp+7);
-			if (validation(buffer,f->esp) && validation(buffer+size-1,f->esp))
-				f->eax = write(fd, buffer, size);
-			else
-				exit(-1);
+			unsigned i =0;
+			while(i<=size)
+			{
+				if(validation((void*)buffer+i, f->esp)==false)
+					exit(-1);
+		
+			i++;
+			}
+			f->eax = write(fd,(void*) buffer, size);
 	}		
 	if(code == SYS_SEEK)
 	{
@@ -159,7 +169,7 @@ syscall_handler (struct intr_frame *f)
 bool validation(void* addr, void* esp)
 
 {
-	if (addr!=NULL && is_user_vaddr(addr)){
+	if (addr!=NULL && is_user_vaddr((void*)addr)){
 		if (page_fault_handler((void*) addr, esp)==true)
 			return true;
 	}
