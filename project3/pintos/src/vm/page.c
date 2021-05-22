@@ -54,7 +54,7 @@ bool page_fault_handler(void* fault_addr, uint32_t esp)
 	struct hash_elem * h = hash_find(&thread_current()->spt, &page.elem);
 	if(h) 
 		return page_status_handler(hash_entry(h, struct sup_page, elem)); 
-	else if(page.user_addr > STACK_CHECK && (uint32_t*)fault_addr>=(esp-32))
+	else if(page.user_addr > STACK_CHECK && (uint32_t*)fault_addr>(esp-32))
 		return stack_growth(pg_round_down(fault_addr));
 	return false;
 }

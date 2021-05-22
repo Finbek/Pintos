@@ -151,7 +151,7 @@ page_fault (struct intr_frame *f)
   {		
 		exit(-1);
   }
-  if(page_fault_handler(fault_addr)==true)
+  if(page_fault_handler(fault_addr, f->esp)==true)
 		return true;
 
   /* To implement virtual memory, delete the rest of the function
