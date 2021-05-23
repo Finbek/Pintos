@@ -393,8 +393,7 @@ int read (int fd, void *buffer, unsigned size)
 
 int write (int fd, const void *buffer, unsigned size)
 {	
-int success =0;
-
+	int success =0;
 	if (!lock_held_by_current_thread(&critical_section))
 		while(!lock_try_acquire(&critical_section))
 			thread_yield();

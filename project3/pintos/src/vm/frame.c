@@ -19,8 +19,11 @@ void *falloc(enum palloc_flags flags, struct sup_page* sp)
 		lock_acquire(&frame_lock);
 		if( frame==NULL)
 		{
-			fevict();
-			frame =palloc_get_page(flags);
+			while(frame==NULL)
+			{	
+				fevict();
+				frame =palloc_get_page(flags);
+			}
 			if(frame==NULL){
 				ASSERT(false);
 				printf("FRAME IS NULL\n");
@@ -113,7 +116,7 @@ bool fevict()
 			
 			f->page->swap_index = write_to_block(f->frame);	
 			f->page->status = PAGE_SWAPPED;
-			printf("%d >>>\n", f->page->user_addr);
+			//printf("%d >>>\n", f->page->user_addr);
 	}
 	
 	if( f->page->status!=PAGE_SWAPPED)

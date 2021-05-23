@@ -73,10 +73,13 @@ bool page_fault_handler(void* fault_addr, uint32_t esp)
 }
 	
 bool page_status_handler(struct sup_page* page)
-{	if(page->status ==PAGE_DEL)
+{	
+	if(page->status ==PAGE_DEL)
 		return false;
+	page->start_time = timer_ticks();
 	if(page->status==PAGE_LOADED)
 	{
+	//	update_order(pagedir_get_page(page->holder->pagedir, page->user_addr));
 		return true;
 	}
 	uint8_t * frame;
@@ -92,7 +95,7 @@ bool page_status_handler(struct sup_page* page)
 	if(page->status==PAGE_SWAPPED)
 	{
 		read_from_block(frame, page->swap_index);
-		printf("<<< %d\n", page->user_addr);
+	//	printf("<<< %d\n", page->user_addr);
 	}
 	else if(page->page_read_bytes!=0)
 	{
