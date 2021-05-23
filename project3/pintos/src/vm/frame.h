@@ -17,7 +17,7 @@ struct frame_table_elem {
 };
 
 static bool flag_swap_init = false;
-void *falloc(enum palloc_flags flags);
+void *falloc(enum palloc_flags flags, struct sup_page* sp);
 bool list_less (const struct list_elem *a,const struct list_elem *b,void *aux UNUSED);
 void f_free(void* frame);
 void init_frame_table();

@@ -17,7 +17,6 @@
 
 static void syscall_handler (struct intr_frame *);
 
-struct lock critical_section;
 void
 syscall_init (void) 
 {
@@ -34,8 +33,6 @@ syscall_handler (struct intr_frame *f)
   if(validation((int*)f->esp, f->esp))
   {
   	int code = *(int*)f->esp;
-
-
 	if(code==SYS_HALT)
 		halt();
 	if(code == SYS_EXIT)
@@ -217,6 +214,7 @@ void exit (int status)
 {
    close_fds();
    munmap_all();
+   spt_free(&thread_current()->spt);
    if(lock_held_by_current_thread(&critical_section))
 	lock_release(&critical_section);
    struct thread *t = thread_current();
@@ -529,7 +527,5 @@ void unmap(struct mmap* mmap)
 	list_remove(&mmap->elem);
 	pagedir_clear_page(thread_current()->pagedir, mmap->page->user_addr);
 	file_close(mmap->page->file);
-	f_free(mmap->page->frame);
-	free(mmap->page);
 	free(mmap);
 }

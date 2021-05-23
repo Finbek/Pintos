@@ -13,22 +13,27 @@ void init_frame_table()
 	list_init(&frame_table);
 }
 
-void *falloc(enum palloc_flags flags)
+void *falloc(enum palloc_flags flags, struct sup_page* sp)
 	{
-		uint8_t* frame = palloc_get_page(flags);
+		void* frame = palloc_get_page(flags);
+		lock_acquire(&frame_lock);
 		if( frame==NULL)
 		{
 			fevict();
-			uint8_t* frame =palloc_get_page(flags);
-			ASSERT(frame!=NULL);
+			frame =palloc_get_page(flags);
+			if(frame==NULL){
+				ASSERT(false);
+				printf("FRAME IS NULL\n");
+			}
+			
 		}
-		lock_acquire(&frame_lock);
 		struct frame_table_elem * f = malloc(sizeof(struct frame_table_elem));
 		f->frame = frame;
 		f->holder = thread_current();
+		f->page = sp;
 		list_insert_ordered(&frame_table, &f->elem, list_less, NULL);
 		lock_release(&frame_lock);
-		return frame;
+		return (uint8_t*) frame;
 	}
 
 void update_order(uint8_t *frame)
@@ -53,6 +58,7 @@ void f_free(void* frame)
 	if(f !=NULL)
 	{
 		list_remove(&f->elem);
+		pagedir_clear_page(f->holder->pagedir,(void*) f->page->user_addr);
 		free(f);
 	}
 	palloc_free_page(frame);	
@@ -74,24 +80,47 @@ struct frame_table_elem*  find_frame(void * frame)
 
 bool fevict()
 {
-	struct frame_table_elem* f = list_entry(list_begin(&frame_table),struct frame_table_elem, elem);
-	if(pagedir_is_accessed(f->holder->pagedir, f->page->user_addr))
-	{	
-		pagedir_set_accessed(f->holder->pagedir, f->page->user_addr, false);
-		if( pagedir_is_dirty(f->holder->pagedir, f->page->user_addr))
+	
+	struct list_elem* first = list_begin(&frame_table);
+        struct list_elem* last = list_end(&frame_table);
+        struct frame_table_elem* f=list_entry(first, struct frame_table_elem, elem); 
+        struct frame_table_elem* tmp; 
+        while (first!=last)
+        {     
+		tmp = list_entry(first, struct frame_table_elem, elem);
+		if(pagedir_is_accessed(tmp->holder->pagedir, tmp->page->user_addr)==false && tmp->page->status==PAGE_LOADED)
 		{
-			file_write_at(f->page->file, f->frame, f->page->page_read_bytes, f->page->offset);
+			f = tmp;	
+			break;	
 		}
+		pagedir_set_accessed(tmp->holder->pagedir, tmp->page->user_addr, false);
+               	first =list_next(first);
+		if(first==last)
+			break;
+                        
+        }
+	f->page->status=PAGE_ALLOCATED;
+	if( pagedir_is_dirty(f->holder->pagedir, f->page->user_addr))
+	{	
+		if(false){
+			file_write_at(f->page->file, f->frame, f->page->page_read_bytes, f->page->offset);
+			}
 		if(flag_swap_init==false)
 		{
 			init_swap();
 			flag_swap_init = true;
 		}
-			f->page->status = PAGE_SWAPPED;
+			
 			f->page->swap_index = write_to_block(f->frame);	
-
+			f->page->status = PAGE_SWAPPED;
+			printf("%d >>>\n", f->page->user_addr);
 	}
-	pagedir_clear_page(f->holder, f->page->user_addr);
+	
+	if( f->page->status!=PAGE_SWAPPED)
+	{
+		f->page->status=PAGE_ALLOCATED;
+	}
+	pagedir_clear_page(f->holder->pagedir, f->page->user_addr);
 	list_remove(&f->elem);
 	palloc_free_page(f->frame);
 	free(f);

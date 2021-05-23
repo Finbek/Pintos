@@ -18,7 +18,6 @@ struct sup_page{
 	struct hash_elem elem;
 	enum page_status status;
 	int swap_index;
-	uint8_t *frame;
 	//File information
 	size_t page_read_bytes;
 	size_t page_zero_bytes;
@@ -32,5 +31,6 @@ struct sup_page* sp_alloc(struct file *file, off_t ofs, uint8_t *upage,uint32_t 
 bool stack_growth(void* fault_addr);
 bool page_status_handler(struct sup_page* page);
 void spt_init();
+spt_free(struct hash* h);
 bool page_fault_handler(void* fault_addr, uint32_t esp);
 #endif

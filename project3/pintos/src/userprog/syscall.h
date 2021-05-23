@@ -5,6 +5,7 @@
 #include "threads/thread.h"
 typedef int pid_t;
 typedef int mapid_t;
+struct lock critical_section;
 void syscall_init (void);
 
 
