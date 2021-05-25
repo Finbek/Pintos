@@ -20,13 +20,13 @@ void *falloc(enum palloc_flags flags, struct sup_page* sp)
 		if( frame==NULL)
 		{
 			while(frame==NULL)
-			{	
+			{
 				fevict();
 				frame =palloc_get_page(flags);
 			}
 			if(frame==NULL){
-				ASSERT(false);
 				printf("FRAME IS NULL\n");
+				ASSERT(false);
 			}
 			
 		}
