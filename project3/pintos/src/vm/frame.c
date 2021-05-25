@@ -102,8 +102,7 @@ bool fevict()
 			break;
                         
         }
-	f->page->status=PAGE_ALLOCATED;
-	if( pagedir_is_dirty(f->holder->pagedir, f->page->user_addr))
+	if(f->page->status == PAGE_LOADED || pagedir_is_dirty(f->holder->pagedir, f->page->user_addr))
 	{	
 		if(false){
 			file_write_at(f->page->file, f->frame, f->page->page_read_bytes, f->page->offset);

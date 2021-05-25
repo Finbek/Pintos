@@ -103,7 +103,8 @@ bool page_status_handler(struct sup_page* page)
 		memset((frame+page->page_read_bytes), 0 , page->page_zero_bytes);
 	}
 	if(frame==NULL)
-		return false;
+	{	frame = falloc(PAL_USER|PAL_ZERO, page);
+	}
 	install_page(page->user_addr, frame, page->writtable);
 	page->status = PAGE_LOADED;
 	return true;
