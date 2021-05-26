@@ -14,27 +14,27 @@ void init_swap()
 
 size_t  write_to_block(void* frame)
 {
-	lock_acquire(&block_lock);
+	get_lock(&block_lock);
 	size_t index = bitmap_scan_and_flip(swap_table, 0,1,false);
 	int i =0;
 	for(i; i<8;i++)
 	{
 		block_write(swap_block, index*8+i,(uint8_t *) frame+i*BLOCK_SECTOR_SIZE);
 	}
-	lock_release(&block_lock);
+	give_up_lock(&block_lock);
 	return index;
 }
 
 void  read_from_block(void* frame, size_t index)
 {
-	lock_acquire(&block_lock);
+	get_lock(&block_lock);
 	int i =0;
         for(i; i<8;i++)
         {
                 block_read(swap_block, index*8+i, (uint8_t *) frame+i*BLOCK_SECTOR_SIZE);
         }
 	bitmap_flip(swap_table, index);
-	lock_release(&block_lock);
+	give_up_lock(&block_lock);
 }
 
 

@@ -27,13 +27,18 @@ static void page_clear(struct hash_elem* e, void* aux UNUSED)
 	struct sup_page* page = hash_entry(e, struct sup_page, elem);
 	uint8_t* frame = pagedir_get_page(page->holder->pagedir, page->user_addr);
 	if(frame!=NULL)
+	{	
+		get_lock(&frame_lock);
 		f_free(frame);
+		give_up_lock(&frame_lock);
+	}
 	free(page);
 }
 
 void 
 spt_init (){
 	hash_bool = hash_init(&thread_current()->spt, hash_func, hash_less, NULL);
+	lock_init(&frame_lock);
 }
 
 spt_free(struct hash* h){
@@ -88,10 +93,12 @@ bool page_status_handler(struct sup_page* page)
 		init_frame_table();
 		flag_frame_init=true;
 	}
+	get_lock(&frame_lock);
 	if(page->page_read_bytes ==0)
 		frame = falloc(PAL_USER|PAL_ZERO, page);
 	else
 		frame=falloc(PAL_USER, page);
+	give_up_lock(&frame_lock);
 	if(page->status==PAGE_SWAPPED)
 	{
 		read_from_block(frame, page->swap_index);
@@ -103,7 +110,10 @@ bool page_status_handler(struct sup_page* page)
 		memset((frame+page->page_read_bytes), 0 , page->page_zero_bytes);
 	}
 	if(frame==NULL)
-	{	frame = falloc(PAL_USER|PAL_ZERO, page);
+	{	
+		get_lock(&frame_lock);
+		frame = falloc(PAL_USER|PAL_ZERO, page);
+		give_up_lock(&frame_lock);
 	}
 	install_page(page->user_addr, frame, page->writtable);
 	page->status = PAGE_LOADED;
@@ -133,8 +143,6 @@ bool stack_growth(void* user_addr)
 	hash_insert(&thread_current()->spt, &sp->elem);
 	sp->status = PAGE_LOADED;
 	return true;
-	
-}		
-
+}
 		
 
